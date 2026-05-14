@@ -1,4 +1,4 @@
-import type { HTTPRequest, HTTPResponse, Page } from "puppeteer";
+import type { HTTPRequest, HTTPResponse, Page } from "puppeteer-core";
 
 export class NetworkInspector {
   page: Page;

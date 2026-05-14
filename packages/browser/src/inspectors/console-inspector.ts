@@ -1,4 +1,4 @@
-import type { ConsoleMessage, Page } from "puppeteer";
+import type { ConsoleMessage, Page } from "puppeteer-core";
 
 export class ConsoleInspector {
   page: Page;

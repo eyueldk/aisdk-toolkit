@@ -1,67 +1,12 @@
 {
-  "name": "@aitoolkit/browser",
-  "version": "1.0.0",
-  "description": "Puppeteer-backed browser tools for the Vercel AI SDK",
+  "name": "aitoolkit",
+  "private": true,
+  "description": "Monorepo for @aitoolkit packages",
   "license": "MIT",
-  "author": "Eyuel G. Molla",
-  "sideEffects": false,
-  "type": "module",
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "exports": {
-    ".": "./dist/index.mjs",
-    "./package.json": "./package.json"
-  },
-  "module": "./dist/index.mjs",
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE",
-    "package.json"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/eyueldk/aitoolkit.git",
-    "directory": "ai-toolkit-browser"
-  },
-  "bugs": {
-    "url": "https://github.com/eyueldk/aitoolkit/issues"
-  },
-  "homepage": "https://github.com/eyueldk/aitoolkit/tree/main/ai-toolkit-browser#readme",
   "scripts": {
-    "build": "tsdown",
-    "prepublishOnly": "pnpm build",
-    "check": "tsc --noEmit",
-    "test": "vitest run"
-  },
-  "keywords": [
-    "aitoolkit",
-    "@aitoolkit/browser",
-    "ai-sdk",
-    "vercel-ai-sdk",
-    "openrouter",
-    "puppeteer",
-    "browser-automation",
-    "tools",
-    "agent",
-    "playwright-alternative"
-  ],
-  "dependencies": {
-    "ai": "^6.0.180",
-    "puppeteer": "^24.43.1",
-    "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "@openrouter/ai-sdk-provider": "^2.9.0",
-    "@types/node": "^25.7.0",
-    "dotenv": "^17.4.2",
-    "tsdown": "^0.17.4",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "build": "pnpm -F @aitoolkit/browser build",
+    "check": "pnpm -F @aitoolkit/browser check",
+    "test": "pnpm -F @aitoolkit/browser test"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -69,7 +14,5 @@
       "esbuild"
     ]
   },
-  "engines": {
-    "node": ">=20"
-  }
+  "packageManager": "pnpm@11.1.0"
 }

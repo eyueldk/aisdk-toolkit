@@ -1,4 +1,4 @@
-import type { Page } from "puppeteer";
+import type { Page } from "puppeteer-core";
 import { ConsoleInspector } from "./inspectors/console-inspector";
 import { NetworkInspector } from "./inspectors/network-inspector";
 

@@ -6,7 +6,9 @@ settings:
 
 importers:
 
-  .:
+  .: {}
+
+  packages/browser:
     dependencies:
       ai:
         specifier: ^6.0.180
