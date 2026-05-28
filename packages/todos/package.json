@@ -50,9 +50,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@openrouter/ai-sdk-provider": "^2.9.0",
     "@types/node": "^25.7.0",
-    "dotenv": "^17.4.2",
     "tsdown": "^0.17.4",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",

@@ -5,7 +5,7 @@
 
 **Version:** `1.1.0` (also in `package.json` `"version"`).
 
-**`writeTodos`** and **`viewTodos`** for the [Vercel AI SDK](https://ai-sdk.dev) (`generateText`, `streamText`, `ToolLoopAgent`, …). **`createTodosToolkit({ state })`** returns **`{ tools, hint, state }`** — merge **`tools`**, append **`hint`** (`TODOS_HINT`) to your system prompt, and read **`state.todos`**. **`state`** is a plain **`TodoState`** object (`{ todos: Todo[] }`); `writeTodos` replaces **`state.todos`**. **`viewTodos`** returns a Markdown bullet list (read-only). Status values: **`pending`**, **`inProgress`**, **`completed`**.
+**`writeTodos`** and **`viewTodos`** for the [Vercel AI SDK](https://ai-sdk.dev) (`generateText`, `streamText`, `ToolLoopAgent`, …). **`createTodosToolkit({ state })`** returns **`{ tools, hint, state }`** — merge **`tools`**, append **`hint`** (`TODOS_HINT`) to your system prompt, and read **`state.todos`**. **`state`** is a plain **`TodoState`** object (`{ todos: Todo[] }`); `writeTodos` replaces **`state.todos`**. **`viewTodos`** returns a Markdown bullet list (read-only). Status values: **`pending`**, **`in_progress`**, **`completed`**.
 
 **Repository:** [github.com/eyueldk/aimachine](https://github.com/eyueldk/aimachine) (`packages/todos`)
 
@@ -53,7 +53,7 @@ console.log(state.todos);
 
 ## Scripts
 
-`pnpm build` · `pnpm check` (`tsc --noEmit`) · `pnpm test` (agent tests need `OPENROUTER_API_KEY` in the repo root `.env`, loaded by Vitest). **`prepublishOnly`** runs `pnpm check && pnpm build` before publish.
+`pnpm build` · `pnpm check` (`tsc --noEmit`) · `pnpm test`. **`prepublishOnly`** runs `pnpm check && pnpm build` before publish.
 
 ## Publishing
 

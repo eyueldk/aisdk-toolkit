@@ -15,7 +15,7 @@ describe("writeTodos tool", () => {
 
     const payload = {
       todos: [
-        { content: "First", status: "inProgress" as const },
+        { content: "First", status: "in_progress" as const },
         { content: "Second", status: "pending" as const },
       ],
     };
@@ -29,7 +29,7 @@ describe("writeTodos tool", () => {
     expect((result as string).includes("First")).toBe(true);
     expect(state.todos).toHaveLength(2);
     expect(state.todos[0]?.content).toBe("First");
-    expect(state.todos[0]?.status).toBe("inProgress");
+    expect(state.todos[0]?.status).toBe("in_progress");
     expect(state.todos[1]?.status).toBe("pending");
   });
 
@@ -77,7 +77,7 @@ describe("viewTodos tool", () => {
     await writeTodos.execute!(
       {
         todos: [
-          { content: "Alpha", status: "inProgress" },
+          { content: "Alpha", status: "in_progress" },
           { content: "Beta|gamma", status: "pending" },
         ],
       },
@@ -90,7 +90,7 @@ describe("viewTodos tool", () => {
     );
 
     expect(result).toContain("## Todos (2)");
-    expect(result).toContain("- **inProgress:** Alpha");
+    expect(result).toContain("- **in_progress:** Alpha");
     expect(result).toContain("- **pending:** Beta|gamma");
   });
 });

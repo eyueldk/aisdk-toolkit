@@ -17,10 +17,10 @@ Use this tool in these scenarios:
 5. The plan may need future revisions or updates based on results from the first few steps. Keeping track of this in a list is helpful.
 
 ## How to Use This Tool
-1. When you start working on a task - Mark it as inProgress BEFORE beginning work.
+1. When you start working on a task - Mark it as in_progress BEFORE beginning work.
 2. After completing a task - Mark it as completed and add any new follow-up tasks discovered during implementation.
 3. You can also update future tasks, such as deleting them if they are no longer necessary, or adding new tasks that are necessary. Don't change previously completed tasks.
-4. You can make several updates to the todo list at once. For example, when you complete a task, you can mark the next task you need to start as inProgress.
+4. You can make several updates to the todo list at once. For example, when you complete a task, you can mark the next task you need to start as in_progress.
 
 ## When NOT to Use This Tool
 It is important to skip using this tool when:
@@ -35,7 +35,7 @@ For extended examples (positive and negative), use a longer custom description i
 
 1. **Task States**: Use these states to track progress:
    - pending: Task not yet started
-   - inProgress: Currently working on (you can have multiple tasks inProgress at a time if they are not related to each other and can be run in parallel)
+   - in_progress: Currently working on (you can have multiple tasks in_progress at a time if they are not related to each other and can be run in parallel)
    - completed: Task finished successfully
 
 2. **Task Management**:
@@ -43,12 +43,12 @@ For extended examples (positive and negative), use a longer custom description i
    - Mark tasks complete IMMEDIATELY after finishing (don't batch completions)
    - Complete current tasks before starting new ones
    - Remove tasks that are no longer relevant from the list entirely
-   - IMPORTANT: When you write this todo list, you should mark your first task (or tasks) as inProgress immediately!.
-   - IMPORTANT: Unless all tasks are completed, you should always have at least one task inProgress to show the user that you are working on something.
+   - IMPORTANT: When you write this todo list, you should mark your first task (or tasks) as in_progress immediately!.
+   - IMPORTANT: Unless all tasks are completed, you should always have at least one task in_progress to show the user that you are working on something.
 
 3. **Task Completion Requirements**:
    - ONLY mark a task as completed when you have FULLY accomplished it
-   - If you encounter errors, blockers, or cannot finish, keep the task as inProgress
+   - If you encounter errors, blockers, or cannot finish, keep the task as in_progress
    - When blocked, create a new task describing what needs to be resolved
    - Never mark a task as completed if there are unresolved issues or errors, work is partial, you hit blockers, or quality standards haven't been met
 
@@ -61,7 +61,7 @@ Being proactive with task management demonstrates attentiveness and ensures you 
 Remember: If you only need to make a few tool calls to complete a task, and it is clear what you need to do, it is better to just do the task directly and NOT call this tool at all.`;
 
 const TodoStatusSchema = z
-  .enum(["pending", "inProgress", "completed"])
+  .enum(["pending", "in_progress", "completed"])
   .describe("Status of the todo");
 
 export type TodoStatus = z.infer<typeof TodoStatusSchema>;

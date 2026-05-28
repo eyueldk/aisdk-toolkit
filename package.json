@@ -6,7 +6,7 @@
   "scripts": {
     "build": "pnpm --filter \"./packages/**\" run build",
     "check": "pnpm --filter \"./packages/**\" run check",
-    "test": "pnpm -F @aimachine/browser test && pnpm -F @aimachine/todos test"
+    "test": "pnpm -F @aimachine/browser test && pnpm -F @aimachine/todos test && pnpm -F @aimachine/filesystem test"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

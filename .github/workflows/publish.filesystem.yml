@@ -1,0 +1,23 @@
+# Publishes @aimachine/filesystem when the package changes on main.
+#
+# npm Trusted Publishing (OIDC): configure this workflow filename on npm for the package:
+#   https://docs.npmjs.com/trusted-publishers/
+
+name: Publish @aimachine/filesystem
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/filesystem/**"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    uses: ./.github/workflows/reusable.publish.yml
+    with:
+      package: "@aimachine/filesystem"

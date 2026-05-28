@@ -2,5 +2,8 @@ packages:
   - "packages/*"
 
 allowBuilds:
+  cpu-features: set this to true or false
   esbuild: true
+  protobufjs: set this to true or false
   puppeteer: true
+  ssh2: set this to true or false

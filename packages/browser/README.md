@@ -67,7 +67,7 @@ Individual factories (`createGotoTool`, `createClickTool`, …) are available if
 
 ## Scripts
 
-`pnpm build` · `pnpm check` (`tsc --noEmit`) · `pnpm test` (agent tests need `OPENROUTER_API_KEY` in `.env`). **`prepublishOnly`** runs `pnpm check && pnpm build` before publish.
+`pnpm build` · `pnpm check` (`tsc --noEmit`) · `pnpm test`. **`prepublishOnly`** runs `pnpm check && pnpm build` before publish.
 
 ## Publishing
 
