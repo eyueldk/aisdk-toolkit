@@ -1,42 +1,30 @@
 # @eyueldk/aisdk-toolkit
 
-Private monorepo for published **[@eyueldk/aisdk-toolkit-*](packages/)** workspace packages.
+Monorepo for [**@eyueldk/aisdk-toolkit-***](https://github.com/eyueldk/aisdk-toolkit) — composable [Vercel AI SDK](https://ai-sdk.dev) toolkits for agents (browser, HTTP, todos, filesystem, shell).
 
-**Repository:** [github.com/eyueldk/aisdk-toolkit](https://github.com/eyueldk/aisdk-toolkit)
+**Source:** [github.com/eyueldk/aisdk-toolkit](https://github.com/eyueldk/aisdk-toolkit)
 
 ## Packages
 
-| Package | Version | Description |
+| Package | Version | Docs |
 | --- | --- | --- |
-| [@eyueldk/aisdk-toolkit-browser](packages/browser) | **2.0.0** | Playwright browser toolkit (`createBrowserToolkit`, `BrowserInstance`, AI SDK tools) |
-| [@eyueldk/aisdk-toolkit-fetch](packages/fetch) | **1.0.0** | HTTP fetch toolkit (`fetchRequest`, native `fetch`) |
-| [@eyueldk/aisdk-toolkit-todos](packages/todos) | **1.2.1** | Task-list toolkit (`writeTodos`, `readTodos`) |
-| [@eyueldk/aisdk-toolkit-filesystem](packages/filesystem) | **1.1.0** | Filesystem toolkit (`read` / `write` / `edit` / `list` / `glob` / `grep`; `ls` streaming) |
-| [@eyueldk/aisdk-toolkit-shell](packages/shell) | **1.1.0** | Shell toolkit (`runCommand`; streaming stdio on adapters) |
+| [@eyueldk/aisdk-toolkit-browser](packages/browser) | 2.0.0 | Playwright browser automation |
+| [@eyueldk/aisdk-toolkit-fetch](packages/fetch) | 1.0.0 | HTTP `fetchRequest` tool |
+| [@eyueldk/aisdk-toolkit-todos](packages/todos) | 1.2.1 | `writeTodos` / `readTodos` |
+| [@eyueldk/aisdk-toolkit-filesystem](packages/filesystem) | 1.2.0 | `read` / `write` / `edit` / `list` / `glob` / `grep` |
+| [@eyueldk/aisdk-toolkit-shell](packages/shell) | 1.2.0 | `runCommand` |
 
-Versions are defined in each package’s **`package.json`**; keep this table in sync when you cut a release.
+Each package is published independently to npm. Install and usage live in that package’s README.
 
-## Development
+## Monorepo development
 
 ```bash
 pnpm install
-pnpm check    # tsc --noEmit in all workspace packages
-pnpm build    # build all packages
-pnpm test     # sequential: browser → todos → filesystem → shell → fetch
+pnpm check   # typecheck all packages
+pnpm build   # build all packages
+pnpm test    # browser → todos → filesystem → shell → fetch (sequential)
 ```
 
-Package-specific install, API, and publishing notes live in each package’s **`README.md`**.
+## License
 
-## Publishing
-
-Each package publishes independently from GitHub Actions when **`packages/<name>/**`** changes on **`main`**, or via **workflow_dispatch**:
-
-| Package | Workflow |
-| --- | --- |
-| `@eyueldk/aisdk-toolkit-browser` | [publish.browser.yml](.github/workflows/publish.browser.yml) |
-| `@eyueldk/aisdk-toolkit-fetch` | [publish.fetch.yml](.github/workflows/publish.fetch.yml) |
-| `@eyueldk/aisdk-toolkit-todos` | [publish.todos.yml](.github/workflows/publish.todos.yml) |
-| `@eyueldk/aisdk-toolkit-filesystem` | [publish.filesystem.yml](.github/workflows/publish.filesystem.yml) |
-| `@eyueldk/aisdk-toolkit-shell` | [publish.shell.yml](.github/workflows/publish.shell.yml) |
-
-All call [reusable.publish.yml](.github/workflows/reusable.publish.yml) (`check` → `build` → `test` → `pnpm publish`). On npm, enable [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) for the matching workflow file per package.
+MIT — [LICENSE](https://github.com/eyueldk/aisdk-toolkit/blob/main/LICENSE)

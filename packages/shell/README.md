@@ -3,28 +3,14 @@
 [![npm](https://img.shields.io/npm/v/@eyueldk/aisdk-toolkit-shell)](https://www.npmjs.com/package/@eyueldk/aisdk-toolkit-shell)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/eyueldk/aisdk-toolkit/blob/main/LICENSE)
 
-**Version:** `1.2.0` (also in `package.json` `"version"`).
+Pluggable shell command tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap runtimes via **`ShellAdapter`** implementations.
 
-**Shell command tools** for the [Vercel AI SDK](https://ai-sdk.dev) (`generateText`, `streamText`, `ToolLoopAgent`, …): **`createShellToolkit({ adapter })`** returns **`{ tools, hint, state }`**. Pass **`tools`** and **`hint`** (`SHELL_HINT`) into the AI SDK. **`state`** holds the same **`adapter`** you passed in.
+## Features
 
-Bundled backends: **`LocalShell`** (host shell), **`DockerShell`** ([dockerode](https://github.com/apocas/dockerode), commands in a running container), **`SshShell`** ([ssh2](https://github.com/mscdex/ssh2), remote host over SSH), **`DaytonaShell`** ([Daytona](https://www.daytona.io/) sandbox via [`@daytonaio/sdk`](https://www.npmjs.com/package/@daytonaio/sdk)). Subclass **`ShellAdapter`** for custom runtimes.
-
-**Repository:** [github.com/eyueldk/aisdk-toolkit](https://github.com/eyueldk/aisdk-toolkit) (`packages/shell`)
-
-## Requirements
-
-| | |
-| --- | --- |
-| **Node** | 20+ (`engines.node`) |
-| **Runtime deps** | `ai` ^6, `zod` ^4, `dockerode` ^4, `@daytonaio/sdk`, `shell-quote` ^1, `ssh2` ^1 |
-
-**Local adapter:** uses the system shell (`shell: true`). Supports **`stdin`** on **`exec`**.
-
-**Docker adapter:** a running container and local Docker engine. Commands run as `sh -c` inside the container. **`stdin`** is not supported.
-
-**SSH adapter:** network access to the host; authenticate with password and/or private key. Supports **`stdin`**. Call **`await adapter.dispose()`** when finished to close the connection.
-
-**Daytona adapter:** a running sandbox and **`DAYTONA_API_KEY`**. Commands run via **`sandbox.process.executeCommand`** (default **`cwd`** `workspace`). **`stdin`** is not supported; stderr is not returned separately from the Daytona API.
+- **`createShellToolkit({ adapter })`** → `{ tools, hint, state }`
+- Tool: **`runCommand`** (exit code, stdout, stderr)
+- Adapters: local host, Docker container, SSH, Daytona sandbox
+- **`adapter.exec`**: optional **`stdin`**, streaming **`stdout`** / **`stderr`** (local/SSH)
 
 ## Install
 
@@ -32,18 +18,13 @@ Bundled backends: **`LocalShell`** (host shell), **`DockerShell`** ([dockerode](
 pnpm add @eyueldk/aisdk-toolkit-shell
 ```
 
-## Usage
+Requires **Node 20+**.
 
-1. Create an adapter (e.g. **`await LocalShell.create()`**).
-2. **`createShellToolkit({ adapter })`** → `{ tools, hint, state }`.
-3. Pass **`tools`** and **`hint`** into the AI SDK.
+## Quick start
 
 ```ts
 import { generateText, stepCountIs } from "ai";
-import {
-  createShellToolkit,
-  LocalShell,
-} from "@eyueldk/aisdk-toolkit-shell";
+import { createShellToolkit, LocalShell } from "@eyueldk/aisdk-toolkit-shell";
 
 const adapter = await LocalShell.create({ cwd: "/path/to/project" });
 const { tools, hint } = createShellToolkit({ adapter });
@@ -57,35 +38,22 @@ await generateText({
 });
 ```
 
-### Adapters
+## Adapters
 
 | Adapter | Factory | Notes |
 | --- | --- | --- |
-| **LocalShell** | `await LocalShell.create({ cwd?, env? })` | Host `shell: true` execution |
-| **DockerShell** | `await DockerShell.create({ container, cwd?, docker?, env? })` | `sh -c` in a running container |
-| **SshShell** | `await SshShell.create({ host, username, password?, privateKey?, cwd?, env? })` | Persistent SSH session; **`dispose()`** when finished |
-| **DaytonaShell** | `await DaytonaShell.create({ sandbox, cwd?, env? })` or `{ sandboxId?, daytona? }` | Daytona **`executeCommand`**; default **`cwd`** `workspace` |
+| **LocalShell** | `await LocalShell.create({ cwd?, env? })` | Host shell; **`stdin`** supported |
+| **DockerShell** | `await DockerShell.create({ container, cwd?, docker?, env? })` | `sh -c` in container; no **`stdin`** |
+| **SshShell** | `await SshShell.create({ host, username, … })` | Persistent SSH; call **`dispose()`** when done |
+| **DaytonaShell** | `await DaytonaShell.create({ sandbox, cwd?, env? })` | Default **`cwd`**: `workspace`; no **`stdin`** |
 
 ```ts
-import {
-  DaytonaShell,
-  DockerShell,
-  LocalShell,
-  SshShell,
-} from "@eyueldk/aisdk-toolkit-shell";
-import { Daytona } from "@daytonaio/sdk";
-
-const local = await LocalShell.create();
-const docker = await DockerShell.create({ container: "my-container", cwd: "/app" });
-const daytona = new Daytona();
-const sandbox = await daytona.create();
-const daytonaShell = await DaytonaShell.create({ sandbox, cwd: "workspace" });
+import { SshShell } from "@eyueldk/aisdk-toolkit-shell";
 
 const ssh = await SshShell.create({
   host: "10.0.0.5",
   username: "deploy",
   privateKey: process.env.SSH_PRIVATE_KEY,
-  cwd: "/var/www",
 });
 try {
   const { tools, hint } = createShellToolkit({ adapter: ssh });
@@ -95,30 +63,22 @@ try {
 }
 ```
 
-### Tools
-
-**`runCommand`** — run a shell command string; optional per-call **`cwd`** and **`timeoutMs`**. Returns exit code, stdout, and stderr (large output is truncated in the tool response). For programmatic use, **`adapter.exec`** also accepts **`stdin`** (`string` or **`Readable`**) and **`stdout`** / **`stderr`** **`Writable`** streams (see Configuration).
-
-**`createShellTools`** is the same **`{ adapter }`** object without **`hint`** / **`state`**. **`createRunCommandTool`** is exported for custom tool sets.
-
 ## Configuration
 
-| Option | Where | Default |
+| Option | Default | Description |
 | --- | --- | --- |
-| **`timeoutMs`** | `adapter.exec` / `runCommand` | `120_000` (`DEFAULT_SHELL_TIMEOUT_MS`) |
-| **`cwd`** | adapter factory or per `exec` | adapter-specific |
-| **`env`** | adapter factory or per `exec` | merged into the command environment |
-| **`stdin`** | `adapter.exec` | string (local/SSH); optional **`Readable`** stream |
-| **`stdout`** / **`stderr`** | `adapter.exec` | optional **`Writable`** streams; result strings empty when streaming |
+| **`timeoutMs`** | `120_000` | Max runtime per command |
+| **`cwd`** | adapter default | Working directory |
+| **`env`** | merged layers | Extra environment variables |
+| **`stdin`** | — | String or **`Readable`** (local/SSH only) |
+| **`stdout`** / **`stderr`** | buffered | Optional **`Writable`** streams; result strings empty when streaming |
 
-## Scripts
+**Daytona:** set **`DAYTONA_API_KEY`** (and **`DAYTONA_API_URL`** for self-hosted). **`stderr`** in results is always empty (API returns combined stdout).
 
-`pnpm build` · `pnpm check` (`tsc --noEmit`) · `pnpm test`. When Docker is available, **`DockerShell`** tests use **Testcontainers** (`alpine`) and **`SshShell`** tests use **`testcontainers/sshd`**; otherwise those suites are skipped. **`DaytonaShell`** tests run when **`DAYTONA_API_KEY`** is set (see repo [`.env.example`](https://github.com/eyueldk/aisdk-toolkit/blob/main/.env.example)). **`prepublishOnly`** runs `pnpm check && pnpm build` before publish.
+## Troubleshooting
 
-## Publishing
-
-CI publishes this package when **`packages/shell/**`** changes on **`main`** (see [`.github/workflows/publish.shell.yml`](https://github.com/eyueldk/aisdk-toolkit/blob/main/.github/workflows/publish.shell.yml)) or via **workflow_dispatch**. Configure [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) for that workflow on the **`@eyueldk/aisdk-toolkit-shell`** package.
+- **Daytona:** if commands fail with **`proxy.localhost`** DNS errors, map that host to loopback or use Daytona Cloud (see [Daytona docs](https://www.daytona.io/docs)).
 
 ## License
 
-MIT — see [repository LICENSE](https://github.com/eyueldk/aisdk-toolkit/blob/main/LICENSE).
+MIT — [eyueldk/aisdk-toolkit](https://github.com/eyueldk/aisdk-toolkit)

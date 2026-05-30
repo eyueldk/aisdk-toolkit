@@ -6,7 +6,7 @@ import { LocalFileSystem, MemoryFileSystem } from "../src/index";
 
 describe("LocalFileSystem", () => {
   test("reads and writes under root", async () => {
-    const root = await mkdtemp(join(tmpdir(), "aimachine-fs-"));
+    const root = await mkdtemp(join(tmpdir(), "aisdk-toolkit-fs-"));
     try {
       const adapter = await LocalFileSystem.create({ root });
       await adapter.writeFile("nested/a.txt", Buffer.from("disk", "utf8"));
@@ -18,8 +18,8 @@ describe("LocalFileSystem", () => {
   });
 
   test("rejects symlinks that resolve outside root", async () => {
-    const root = await mkdtemp(join(tmpdir(), "aimachine-fs-"));
-    const outside = await mkdtemp(join(tmpdir(), "aimachine-fs-out-"));
+    const root = await mkdtemp(join(tmpdir(), "aisdk-toolkit-fs-"));
+    const outside = await mkdtemp(join(tmpdir(), "aisdk-toolkit-fs-out-"));
     try {
       await writeFile(join(outside, "secret.txt"), "leak", "utf8");
       try {
@@ -38,7 +38,7 @@ describe("LocalFileSystem", () => {
   });
 
   test("allows .. when resolved path stays inside root", async () => {
-    const root = await mkdtemp(join(tmpdir(), "aimachine-fs-"));
+    const root = await mkdtemp(join(tmpdir(), "aisdk-toolkit-fs-"));
     try {
       await mkdir(join(root, "nested"), { recursive: true });
       await writeFile(join(root, "peer.txt"), "peer", "utf8");
@@ -52,7 +52,7 @@ describe("LocalFileSystem", () => {
   });
 
   test("readDir and glob stay within root", async () => {
-    const root = await mkdtemp(join(tmpdir(), "aimachine-fs-"));
+    const root = await mkdtemp(join(tmpdir(), "aisdk-toolkit-fs-"));
     try {
       await writeFile(join(root, "one.txt"), "1", "utf8");
       await mkdir(join(root, "sub"), { recursive: true });

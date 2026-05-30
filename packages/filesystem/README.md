@@ -3,24 +3,14 @@
 [![npm](https://img.shields.io/npm/v/@eyueldk/aisdk-toolkit-filesystem)](https://www.npmjs.com/package/@eyueldk/aisdk-toolkit-filesystem)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/eyueldk/aisdk-toolkit/blob/main/LICENSE)
 
-**Version:** `1.2.0` (also in `package.json` `"version"`).
+Pluggable filesystem tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap storage via **`FileSystemAdapter`** implementations.
 
-Pluggable **filesystem tools** for the [Vercel AI SDK](https://ai-sdk.dev) (`generateText`, `streamText`, `ToolLoopAgent`, …): **`createFileSystemToolkit({ adapter, permissions? })`** returns **`{ tools, hint, state }`**. Pass **`tools`** and **`hint`** (`FILE_SYSTEM_HINT`) into the AI SDK. **`state`** holds the same **`adapter`** and optional **`permissions`** you passed in.
+## Features
 
-Bundled backends: **`MemoryFileSystem`** (volatile [memfs](https://github.com/streamich/memfs)), **`LocalFileSystem`** (host disk under a **`root`** directory), **`DockerFileSystem`** ([dockerode](https://github.com/apocas/dockerode), files in a running container), **`DaytonaFileSystem`** ([Daytona](https://www.daytona.io/) sandbox via [`@daytonaio/sdk`](https://www.npmjs.com/package/@daytonaio/sdk)). Subclass **`FileSystemAdapter`** for custom storage.
-
-**Repository:** [github.com/eyueldk/aisdk-toolkit](https://github.com/eyueldk/aisdk-toolkit) (`packages/filesystem`)
-
-## Requirements
-
-| | |
-| --- | --- |
-| **Node** | 20+ (`engines.node`) |
-| **Runtime deps** | `ai` ^6, `zod` ^4, `minimatch` ^10, `memfs` ^4, `pathe` ^2, `dockerode` ^4, `@daytonaio/sdk`, `tar-stream` ^3, `safe-regex2` ^5 |
-
-**Docker adapter:** a running container, local Docker engine, and POSIX **`find`** in the image (Alpine/Debian). Listing uses **`find`** (GNU `-printf` when available, otherwise BusyBox `-type f` / `-type d`). **Daytona adapter:** a running sandbox and **`DAYTONA_API_KEY`**; read/write/list via the Daytona filesystem API (default sandbox **`root`** `workspace`). **Local / Docker / Daytona adapters:** adapter paths are normalized with **`resolvePath`**, then mapped under **`root`**; access is denied when the resolved path would fall outside that root (`..` allowed when it stays inside). **`LocalFileSystem`** uses **`realpath`** so symlinks cannot escape **`root`**. Tools with permissions use **`collectReadableFilePaths`** / **`collectVisibleEntries`** so denied subtrees are not read or traversed.
-
-Adapter-facing paths are POSIX (`src/a.ts`). **`resolvePath`** normalizes paths against a virtual `/` ([pathe](https://github.com/unjs/pathe)). Glob patterns use **`normalizeGlobPattern`** so `**` and `..` in patterns are not treated as filesystem traversal.
+- **`createFileSystemToolkit({ adapter, permissions? })`** → `{ tools, hint, state }`
+- Tools: **`read`**, **`write`**, **`edit`**, **`list`**, **`glob`**, **`grep`**
+- Optional path **permissions** (first matching glob wins)
+- Adapters: memory, local disk, Docker container, Daytona sandbox
 
 ## Install
 
@@ -28,11 +18,9 @@ Adapter-facing paths are POSIX (`src/a.ts`). **`resolvePath`** normalizes paths 
 pnpm add @eyueldk/aisdk-toolkit-filesystem
 ```
 
-## Usage
+Requires **Node 20+**.
 
-1. Create an adapter (e.g. **`await MemoryFileSystem.create({ initialFiles? })`**).
-2. **`createFileSystemToolkit({ adapter, permissions? })`** → `{ tools, hint, state }`.
-3. Pass **`tools`** and **`hint`** into the AI SDK.
+## Quick start
 
 ```ts
 import { generateText, stepCountIs } from "ai";
@@ -55,66 +43,56 @@ await generateText({
 });
 ```
 
-**Optional permissions** (first matching glob wins per operation):
+## Adapters
+
+| Adapter | Factory | Notes |
+| --- | --- | --- |
+| **MemoryFileSystem** | `await MemoryFileSystem.create({ initialFiles? })` | Volatile; tests and sandboxes |
+| **LocalFileSystem** | `await LocalFileSystem.create({ root })` | Host paths under **`root`**; symlinks cannot escape **`root`** |
+| **DockerFileSystem** | `await DockerFileSystem.create({ container, root?, docker? })` | Running container; list via **`find`** |
+| **DaytonaFileSystem** | `await DaytonaFileSystem.create({ sandbox, root? })` or `{ sandboxId?, daytona? }` | Default **`root`**: `workspace` |
 
 ```ts
-const { tools, hint } = createFileSystemToolkit({
+import { LocalFileSystem } from "@eyueldk/aisdk-toolkit-filesystem";
+
+const disk = await LocalFileSystem.create({ root: "/path/to/workspace" });
+```
+
+Daytona (requires **`DAYTONA_API_KEY`**; optional **`DAYTONA_API_URL`** for self-hosted):
+
+```ts
+import { DaytonaFileSystem } from "@eyueldk/aisdk-toolkit-filesystem";
+import { Daytona } from "@daytonaio/sdk";
+
+const sandbox = await new Daytona().create();
+const adapter = await DaytonaFileSystem.create({ sandbox, root: "workspace" });
+```
+
+Adapter paths are POSIX and normalized with **`resolvePath`**. **`..`** is allowed when the resolved path stays inside **`root`**.
+
+## Permissions
+
+```ts
+createFileSystemToolkit({
   adapter,
   permissions: [{ mode: "deny", operations: ["write"], paths: ["etc/**"] }],
 });
 ```
 
-**`createFileSystemTools`** is the same **`{ adapter, permissions? }`** object without **`hint`** / **`state`**. Individual **`createReadTool`**, **`createWriteTool`**, … factories are exported for custom tool sets.
+Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; no rule → allowed.
 
-### Adapters
+## Configuration
 
-| Adapter | Factory | Notes |
-| --- | --- | --- |
-| **MemoryFileSystem** | `await MemoryFileSystem.create({ initialFiles? })` | In-memory; good for tests and sandboxes |
-| **LocalFileSystem** | `await LocalFileSystem.create({ root })` | Real disk under resolved **`root`** |
-| **DockerFileSystem** | `await DockerFileSystem.create({ container, root?, docker? })` | Lists via in-container **`find`** (Alpine BusyBox or GNU); read/write via archive APIs |
-| **DaytonaFileSystem** | `await DaytonaFileSystem.create({ sandbox, root? })` or `{ sandboxId?, daytona? }` | Daytona sandbox FS API; default **`root`** is `workspace` |
+| API | Description |
+| --- | --- |
+| **`adapter.ls(path, { recursive?, stream? })`** | Default array; **`stream: true`** for large trees |
+| **`createFileSystemTools`** | Tools only (no **`hint`** / **`state`**) |
 
-```ts
-import {
-  DaytonaFileSystem,
-  DockerFileSystem,
-  LocalFileSystem,
-} from "@eyueldk/aisdk-toolkit-filesystem";
-import { Daytona } from "@daytonaio/sdk";
+## Troubleshooting
 
-const disk = await LocalFileSystem.create({ root: "/path/to/workspace" });
-const container = await DockerFileSystem.create({
-  container: "my-container-id-or-name",
-  root: "/workspace",
-});
-const daytona = new Daytona();
-const sandbox = await daytona.create();
-const remoteFs = await DaytonaFileSystem.create({ sandbox, root: "workspace" });
-```
-
-Extend **`FileSystemAdapter`**: implement **`createReadStream`**, **`createWriteStream`**, and **`readDir`**. **`readFile`** / **`writeFile`** use those streams on the base class. **`ls(path, { recursive?, stream? })`** returns **`FileStat[]`** by default, or **`AsyncIterable<FileStat>`** when **`stream: true`** (for large trees). Override **`glob`** / **`grep`** only when the default tree walk is not enough.
-
-### Tools
-
-`read`, `write`, `edit` (exact `oldText` → `newText`), `list` (optional `recursive`), `glob`, `grep` (RegExp + optional `pathGlob`). Tools enforce **`permissions`** on each path; **`list`** / **`glob`** / **`grep`** omit denied paths instead of throwing. Adapter **`ls({ stream: true })`** streams entries for large trees (used internally by **`glob`** / **`grep`**).
-
-## Permissions
-
-Rules are **`FileSystemPermissionRule[]`**: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. Evaluation is **first match wins** (rule order, then `paths` order). No matching rule → **allowed**. For default-deny, add an early catch-all **`deny`** rule.
-
-Helpers: **`enforcePermissions`**, **`evaluatePermission`**, **`isOperationAllowed`**, **`filterReadablePaths`**, **`PermissionDeniedError`**.
-
-## Scripts
-
-`pnpm build` · `pnpm check` (`tsc --noEmit`) · `pnpm test` (when Docker is available, Docker adapter tests use **Testcontainers** to start **`alpine`**; otherwise they are skipped). Daytona adapter tests run when **`DAYTONA_API_KEY`** is set (see repo [`.env.example`](https://github.com/eyueldk/aisdk-toolkit/blob/main/.env.example)). **`prepublishOnly`** runs `pnpm check && pnpm build` before publish.
-
-Optional live agent smoke test: `tests/integration.test.ts` (skipped unless repo-root `.env` has non-empty `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`; copy [`.env.example`](https://github.com/eyueldk/aisdk-toolkit/blob/main/.env.example)). Uses [OpenRouter](https://openrouter.ai/) with AI SDK `ToolLoopAgent`.
-
-## Publishing
-
-CI publishes this package when **`packages/filesystem/**`** changes on **`main`** (see [`.github/workflows/publish.filesystem.yml`](https://github.com/eyueldk/aisdk-toolkit/blob/main/.github/workflows/publish.filesystem.yml)) or via **workflow_dispatch**. Configure [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) for that workflow on the **`@eyueldk/aisdk-toolkit-filesystem`** package.
+- **Docker:** needs a running container and POSIX **`find`** in the image.
+- **Daytona:** sandbox create may succeed while file ops fail if the toolbox proxy is unreachable (self-hosted OSS: resolve **`proxy.localhost`** to loopback).
 
 ## License
 
-MIT — see [repository LICENSE](https://github.com/eyueldk/aisdk-toolkit/blob/main/LICENSE).
+MIT — [eyueldk/aisdk-toolkit](https://github.com/eyueldk/aisdk-toolkit)

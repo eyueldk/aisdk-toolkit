@@ -54,7 +54,7 @@
     "@openrouter/ai-sdk-provider": "^2.9.0",
     "@types/node": "^25.7.0",
     "dotenv": "^17.2.1",
-    "tsdown": "^0.17.4",
+    "tsdown": "^0.22.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"

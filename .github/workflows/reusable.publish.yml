@@ -32,8 +32,7 @@ jobs:
       - uses: pnpm/action-setup@v6
         with:
           cache: true
-          run_install: |
-            - args: [--frozen-lockfile]
+          run_install: true
 
       - name: Check (tsc)
         run: pnpm --filter '${{ inputs.package }}' run check

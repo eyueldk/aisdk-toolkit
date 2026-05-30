@@ -3,6 +3,14 @@
   "private": true,
   "description": "Monorepo root for @eyueldk/aisdk-toolkit-* workspace packages",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eyueldk/aisdk-toolkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eyueldk/aisdk-toolkit/issues"
+  },
+  "homepage": "https://github.com/eyueldk/aisdk-toolkit",
   "scripts": {
     "build": "pnpm --filter \"./packages/**\" run build",
     "check": "pnpm --filter \"./packages/**\" run check",
@@ -10,8 +18,11 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "cpu-features",
+      "esbuild",
+      "protobufjs",
       "puppeteer",
-      "esbuild"
+      "ssh2"
     ]
   },
   "packageManager": "pnpm@11.1.0"
