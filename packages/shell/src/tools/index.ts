@@ -1,15 +1,15 @@
 import type { ShellAdapter } from "../adapter";
-import { createRunCommandTool } from "./run-command-tool";
+import { createExecuteCommandTool } from "./execute-command-tool";
 
 export type CreateShellToolsOptions = {
   adapter: ShellAdapter;
 };
 
 /**
- * Builds shell AI SDK tools (`runCommand`) for the Vercel AI SDK.
+ * Builds shell AI SDK tools (`executeCommand`) for the Vercel AI SDK.
  */
 export function createShellTools(options: CreateShellToolsOptions) {
   return {
-    runCommand: createRunCommandTool(options),
+    executeCommand: createExecuteCommandTool(options),
   } as const;
 }

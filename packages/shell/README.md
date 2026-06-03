@@ -8,7 +8,7 @@ Pluggable shell command tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap 
 ## Features
 
 - **`createShellToolkit({ adapter })`** → `{ tools, hint, state }`
-- Tool: **`runCommand`** (exit code, stdout, stderr)
+- Tool: **`executeCommand`** (exit code, stdout, stderr)
 - Adapters: local host, Docker container, SSH, Daytona sandbox
 - **`adapter.exec`**: optional **`stdin`**, streaming **`stdout`** / **`stderr`** (local/SSH)
 
@@ -74,6 +74,12 @@ try {
 | **`stdout`** / **`stderr`** | buffered | Optional **`Writable`** streams; result strings empty when streaming |
 
 **Daytona:** set **`DAYTONA_API_KEY`** (and **`DAYTONA_API_URL`** for self-hosted). **`stderr`** in results is always empty (API returns combined stdout).
+
+## Migration
+
+### 1.2 → 1.3
+
+- Tool renamed: **`runCommand`** → **`executeCommand`**.
 
 ## Troubleshooting
 

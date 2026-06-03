@@ -11,15 +11,15 @@ describe("createShellToolkit", () => {
   test("returns tools, hint, and state", async () => {
     const adapter = await LocalShell.create();
     const kit = createShellToolkit({ adapter });
-    expect(kit.tools.runCommand).toBeDefined();
+    expect(kit.tools.executeCommand).toBeDefined();
     expect(kit.hint).toBe(SHELL_HINT);
     expect(kit.state.adapter).toBe(adapter);
   });
 
-  test("runCommand formats adapter output", async () => {
+  test("executeCommand formats adapter output", async () => {
     const adapter = await LocalShell.create();
-    const { runCommand } = createShellToolkit({ adapter }).tools;
-    const out = await runCommand.execute!(
+    const { executeCommand } = createShellToolkit({ adapter }).tools;
+    const out = await executeCommand.execute!(
       { command: "echo hi" },
       { ...toolOpts, messages: [] },
     );

@@ -2,14 +2,14 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { CreateShellToolsOptions } from "./index";
 
-const RUN_COMMAND_DESCRIPTION =
+const EXECUTE_COMMAND_DESCRIPTION =
   "Run a shell command and return exit code, stdout, and stderr. Use for builds, scripts, git, package managers, and other CLI tasks.";
 
 const MAX_TOOL_OUTPUT_CHARS = 32_000;
 
-export function createRunCommandTool(options: CreateShellToolsOptions) {
+export function createExecuteCommandTool(options: CreateShellToolsOptions) {
   return tool({
-    description: RUN_COMMAND_DESCRIPTION,
+    description: EXECUTE_COMMAND_DESCRIPTION,
     inputSchema: z.object({
       command: z
         .string()
@@ -33,7 +33,7 @@ export function createRunCommandTool(options: CreateShellToolsOptions) {
   });
 }
 
-export { RUN_COMMAND_DESCRIPTION };
+export { EXECUTE_COMMAND_DESCRIPTION };
 
 function formatExecResult(result: {
   stdout: string;

@@ -27,6 +27,6 @@ export {
   type CreateShellToolsOptions,
 } from "./tools";
 export {
-  createRunCommandTool,
-  RUN_COMMAND_DESCRIPTION,
-} from "./tools/run-command-tool";
+  createExecuteCommandTool,
+  EXECUTE_COMMAND_DESCRIPTION,
+} from "./tools/execute-command-tool";
