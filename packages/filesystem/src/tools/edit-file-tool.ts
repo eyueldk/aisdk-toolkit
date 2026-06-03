@@ -4,12 +4,12 @@ import { enforcePermissions } from "../permissions";
 import { resolvePath } from "../path";
 import type { CreateFileSystemToolsOptions } from "./index";
 
-const EDIT_DESCRIPTION =
+const EDIT_FILE_DESCRIPTION =
   "Edit a file by replacing `oldText` with `newText` in the UTF-8 contents at `path`. Fails if `oldText` is not found (unless `optional` is true).";
 
-export function createEditTool(options: CreateFileSystemToolsOptions) {
+export function createEditFileTool(options: CreateFileSystemToolsOptions) {
   return tool({
-    description: EDIT_DESCRIPTION,
+    description: EDIT_FILE_DESCRIPTION,
     inputSchema: z.object({
       path: z.string().describe("File path (POSIX-style)"),
       oldText: z.string().describe("Text to find"),
@@ -58,4 +58,4 @@ export function createEditTool(options: CreateFileSystemToolsOptions) {
   });
 }
 
-export { EDIT_DESCRIPTION };
+export { EDIT_FILE_DESCRIPTION };

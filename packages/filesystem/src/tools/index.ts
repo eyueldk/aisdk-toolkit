@@ -1,11 +1,11 @@
 import type { FileSystemAdapter } from "../adapter";
 import type { FileSystemPermissionRule } from "../permissions";
-import { createEditTool } from "./edit-tool";
+import { createEditFileTool } from "./edit-file-tool";
 import { createGlobTool } from "./glob-tool";
 import { createGrepTool } from "./grep-tool";
 import { createListTool } from "./list-tool";
-import { createReadTool } from "./read-tool";
-import { createWriteTool } from "./write-tool";
+import { createReadFileTool } from "./read-file-tool";
+import { createWriteFileTool } from "./write-file-tool";
 
 export type CreateFileSystemToolsOptions = {
   adapter: FileSystemAdapter;
@@ -13,7 +13,7 @@ export type CreateFileSystemToolsOptions = {
 };
 
 /**
- * Builds filesystem AI SDK tools (`read`, `write`, `edit`, `list`, `glob`, `grep`) for the Vercel AI SDK.
+ * Builds filesystem AI SDK tools (`readFile`, `writeFile`, `editFile`, `list`, `glob`, `grep`) for the Vercel AI SDK.
  * Pass `{ adapter, permissions? }` — same object {@link createFileSystemToolkit} accepts (toolkit adds `hint` and mirrors `state`).
  */
 export function createFileSystemTools(options: CreateFileSystemToolsOptions) {
@@ -22,9 +22,9 @@ export function createFileSystemTools(options: CreateFileSystemToolsOptions) {
     permissions: options.permissions,
   };
   return {
-    read: createReadTool(ctx),
-    write: createWriteTool(ctx),
-    edit: createEditTool(ctx),
+    readFile: createReadFileTool(ctx),
+    writeFile: createWriteFileTool(ctx),
+    editFile: createEditFileTool(ctx),
     list: createListTool(ctx),
     glob: createGlobTool(ctx),
     grep: createGrepTool(ctx),

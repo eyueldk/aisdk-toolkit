@@ -15,7 +15,7 @@ const openRouterReady = Boolean(
 describe.skipIf(!openRouterReady)(
   "filesystem toolkit + ToolLoopAgent (OpenRouter)",
   () => {
-    test("agent reads file via read tool", async () => {
+    test("agent reads file via readFile tool", async () => {
       const adapter = await MemoryFileSystem.create({
         initialFiles: { "note.txt": MAGIC },
       });
@@ -33,7 +33,7 @@ describe.skipIf(!openRouterReady)(
 
       expect(
         result.steps.some((step) =>
-          step.toolCalls?.some((call) => call.toolName === "read"),
+          step.toolCalls?.some((call) => call.toolName === "readFile"),
         ),
       ).toBe(true);
       expect(result.text).toContain(MAGIC);

@@ -9,12 +9,12 @@ import {
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 
-describe("read / write / edit / list tools", () => {
-  test("round-trip write, list, read, edit", async () => {
+describe("readFile / writeFile / editFile / list tools", () => {
+  test("round-trip writeFile, list, readFile, editFile", async () => {
     const adapter = await MemoryFileSystem.create();
     const tools = createFileSystemTools({ adapter });
 
-    await tools.write.execute!(
+    await tools.writeFile.execute!(
       { path: "src/hello.txt", contents: "hello world" },
       { ...toolOpts, messages: [] },
     );
@@ -25,13 +25,13 @@ describe("read / write / edit / list tools", () => {
     );
     expect(String(listed)).toContain("hello.txt");
 
-    const body = await tools.read.execute!(
+    const body = await tools.readFile.execute!(
       { path: "src/hello.txt" },
       { ...toolOpts, messages: [] },
     );
     expect(body).toBe("hello world");
 
-    await tools.edit.execute!(
+    await tools.editFile.execute!(
       {
         path: "src/hello.txt",
         oldText: "world",
@@ -54,7 +54,7 @@ describe("createFileSystemTools", () => {
     });
 
     await expect(
-      tools.write.execute!(
+      tools.writeFile.execute!(
         { path: "secret/x.txt", contents: "nope" },
         { ...toolOpts, messages: [] },
       ),
@@ -163,7 +163,7 @@ describe("createFileSystemToolkit", () => {
       initialFiles: { "a.txt": "A" },
     });
     const { tools } = createFileSystemToolkit({ adapter });
-    expect(await tools.read.execute!({ path: "a.txt" }, { ...toolOpts, messages: [] })).toBe(
+    expect(await tools.readFile.execute!({ path: "a.txt" }, { ...toolOpts, messages: [] })).toBe(
       "A",
     );
   });
@@ -171,9 +171,9 @@ describe("createFileSystemToolkit", () => {
   test("returns tools, hint, and state", async () => {
     const adapter = await MemoryFileSystem.create();
     const kit = createFileSystemToolkit({ adapter });
-    expect(kit.tools.read).toBeDefined();
-    expect(kit.tools.write).toBeDefined();
-    expect(kit.tools.edit).toBeDefined();
+    expect(kit.tools.readFile).toBeDefined();
+    expect(kit.tools.writeFile).toBeDefined();
+    expect(kit.tools.editFile).toBeDefined();
     expect(kit.tools.list).toBeDefined();
     expect(kit.tools.glob).toBeDefined();
     expect(kit.tools.grep).toBeDefined();

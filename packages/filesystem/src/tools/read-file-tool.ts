@@ -4,12 +4,12 @@ import { enforcePermissions } from "../permissions";
 import { resolvePath } from "../path";
 import type { CreateFileSystemToolsOptions } from "./index";
 
-const READ_DESCRIPTION =
+const READ_FILE_DESCRIPTION =
   "Read the full UTF-8 text of a file at `path`. Use for inspecting source, configs, or logs before editing.";
 
-export function createReadTool(options: CreateFileSystemToolsOptions) {
+export function createReadFileTool(options: CreateFileSystemToolsOptions) {
   return tool({
-    description: READ_DESCRIPTION,
+    description: READ_FILE_DESCRIPTION,
     inputSchema: z.object({
       path: z.string().describe("File path (POSIX-style, forward slashes)"),
     }),
@@ -25,4 +25,4 @@ export function createReadTool(options: CreateFileSystemToolsOptions) {
   });
 }
 
-export { READ_DESCRIPTION };
+export { READ_FILE_DESCRIPTION };

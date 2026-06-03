@@ -52,9 +52,18 @@ export {
   createFileSystemTools,
   type CreateFileSystemToolsOptions,
 } from "./tools";
-export { EDIT_DESCRIPTION, createEditTool } from "./tools/edit-tool";
+export {
+  EDIT_FILE_DESCRIPTION,
+  createEditFileTool,
+} from "./tools/edit-file-tool";
 export { GLOB_DESCRIPTION, createGlobTool } from "./tools/glob-tool";
 export { GREP_DESCRIPTION, createGrepTool } from "./tools/grep-tool";
 export { LIST_DESCRIPTION, createListTool } from "./tools/list-tool";
-export { READ_DESCRIPTION, createReadTool } from "./tools/read-tool";
-export { WRITE_DESCRIPTION, createWriteTool } from "./tools/write-tool";
+export {
+  READ_FILE_DESCRIPTION,
+  createReadFileTool,
+} from "./tools/read-file-tool";
+export {
+  WRITE_FILE_DESCRIPTION,
+  createWriteFileTool,
+} from "./tools/write-file-tool";

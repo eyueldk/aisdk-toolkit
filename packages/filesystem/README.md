@@ -8,7 +8,7 @@ Pluggable filesystem tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap sto
 ## Features
 
 - **`createFileSystemToolkit({ adapter, permissions? })`** → `{ tools, hint, state }`
-- Tools: **`read`**, **`write`**, **`edit`**, **`list`**, **`glob`**, **`grep`**
+- Tools: **`readFile`**, **`writeFile`**, **`editFile`**, **`list`**, **`glob`**, **`grep`**
 - Optional path **permissions** (first matching glob wins)
 - Adapters: memory, local disk, Docker container, Daytona sandbox
 
@@ -80,6 +80,12 @@ createFileSystemToolkit({
 ```
 
 Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; no rule → allowed.
+
+## Migration
+
+### 1.2 → 1.3
+
+- Tool names renamed: **`read`** → **`readFile`**, **`write`** → **`writeFile`**, **`edit`** → **`editFile`**.
 
 ## Configuration
 

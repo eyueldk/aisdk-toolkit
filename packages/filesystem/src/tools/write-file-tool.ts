@@ -4,12 +4,12 @@ import { enforcePermissions } from "../permissions";
 import { resolvePath } from "../path";
 import type { CreateFileSystemToolsOptions } from "./index";
 
-const WRITE_DESCRIPTION =
+const WRITE_FILE_DESCRIPTION =
   "Write UTF-8 text to a file at `path`, replacing any existing file contents. Creates parent directories when the adapter supports it.";
 
-export function createWriteTool(options: CreateFileSystemToolsOptions) {
+export function createWriteFileTool(options: CreateFileSystemToolsOptions) {
   return tool({
-    description: WRITE_DESCRIPTION,
+    description: WRITE_FILE_DESCRIPTION,
     inputSchema: z.object({
       path: z.string().describe("File path (POSIX-style)"),
       contents: z.string().describe("Full new file contents"),
@@ -27,4 +27,4 @@ export function createWriteTool(options: CreateFileSystemToolsOptions) {
   });
 }
 
-export { WRITE_DESCRIPTION };
+export { WRITE_FILE_DESCRIPTION };
