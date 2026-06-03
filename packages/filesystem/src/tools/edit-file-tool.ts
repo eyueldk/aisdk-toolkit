@@ -1,3 +1,4 @@
+import { createTwoFilesPatch } from "diff";
 import { tool } from "ai";
 import { z } from "zod";
 import { enforcePermissions } from "../permissions";
@@ -5,7 +6,14 @@ import { resolvePath } from "../path";
 import type { FileSystemToolContext } from "./index";
 
 const EDIT_FILE_DESCRIPTION =
-  "Edit a file by replacing `oldText` with `newText` in the UTF-8 contents at `path`. Fails if `oldText` is not found (unless `optional` is true).";
+  "Edit a file by replacing `oldText` with `newText` in the UTF-8 contents at `path`. Returns a unified diff of the change. Fails if `oldText` is not found (unless `optional` is true).";
+
+const EditFileOutputSchema = z.object({
+  changed: z.boolean().describe("Whether the file was modified"),
+  diff: z
+    .string()
+    .describe("Unified diff of before vs after (empty when unchanged)"),
+});
 
 export function createEditFileTool(options: FileSystemToolContext) {
   return tool({
@@ -23,6 +31,7 @@ export function createEditFileTool(options: FileSystemToolContext) {
         .optional()
         .describe("If true, succeed with a message when oldText is missing"),
     }),
+    outputSchema: EditFileOutputSchema,
     execute: async ({
       path,
       oldText,
@@ -42,20 +51,28 @@ export function createEditFileTool(options: FileSystemToolContext) {
         rules: options.permissions,
       });
 
-      let body = await options.adapter.readFile(p, { encoding: "utf8" });
+      const body = await options.adapter.readFile(p, { encoding: "utf8" });
       if (!body.includes(oldText)) {
         if (optional) {
-          return `No change: oldText not found in '${p}'.`;
+          return { changed: false, diff: "" };
         }
         throw new Error(`oldText not found in '${p}'`);
       }
+
       const next = replaceAll
         ? body.split(oldText).join(newText)
         : body.replace(oldText, newText);
       await options.adapter.writeFile(p, next, { encoding: "utf8" });
-      return `Updated '${p}' (${replaceAll ? "all" : "first"} occurrence(s)).`;
+      return {
+        changed: true,
+        diff: formatUnifiedDiff(p, body, next),
+      };
     },
   });
 }
 
 export { EDIT_FILE_DESCRIPTION };
+
+function formatUnifiedDiff(path: string, before: string, after: string): string {
+  return createTwoFilesPatch(path, path, before, after).trimEnd();
+}

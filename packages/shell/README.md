@@ -8,7 +8,7 @@ Pluggable shell command tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap 
 ## Features
 
 - **`createShellToolkit({ adapter })`** → `{ tools, hint, state }`
-- Tool: **`executeCommand`** with optional **`cwd`** per call (agent picks working directory)
+- Tool: **`executeCommand`** with optional **`cwd`** per call — streams structured stdout/stderr chunks, then an exit chunk (AI SDK async iterable **`execute`**)
 - Adapters: local host, Docker container, SSH, Daytona sandbox
 - **`adapter.exec`**: optional **`stdin`**, streaming **`stdout`** / **`stderr`** (local/SSH)
 
@@ -82,6 +82,16 @@ try {
 | **`cwd`** | adapter default | Working directory for this command |
 | **`timeoutMs`** | `120_000` | Max runtime |
 
+### `executeCommand` tool output
+
+Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
+
+| **`kind`** | Fields |
+| --- | --- |
+| **`stdout`** | `{ text }` |
+| **`stderr`** | `{ text }` |
+| **`exit`** | `{ exitCode, signal }` — always last |
+
 ### `adapter.exec` (advanced)
 
 | Option | Default | Description |
@@ -94,6 +104,10 @@ try {
 **Daytona:** set **`DAYTONA_API_KEY`** (and **`DAYTONA_API_URL`** for self-hosted). **`stderr`** in results is always empty (API returns combined stdout).
 
 ## Migration
+
+### 1.3 → 1.4
+
+- **`executeCommand`** returns a **streaming async iterable** of structured chunks (`stdout` / `stderr` / `exit`) with **`outputSchema`**, not a formatted string.
 
 ### 1.2 → 1.3
 

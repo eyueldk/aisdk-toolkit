@@ -8,13 +8,25 @@ import { normalizeGlobPattern, resolvePath } from "../path";
 import type { FileSystemToolContext } from "./index";
 
 const GREP_DESCRIPTION =
-  "Search UTF-8 file contents with a JavaScript RegExp (`pattern` string, optional `flags`). Optional `pathGlob` limits which files are searched (default: all files). Returns matches as `path:line: text` lines.";
+  "Search UTF-8 file contents with a JavaScript RegExp (`pattern` string, optional `flags`). Optional `pathGlob` limits which files are searched (default: all files).";
+
+const GrepMatchSchema = z.object({
+  path: z.string().describe("File path"),
+  line: z.number().int().positive().describe("1-based line number"),
+  text: z.string().describe("Matching line text"),
+});
+
+const GrepOutputSchema = z.object({
+  matches: z.array(GrepMatchSchema).describe("All matches found"),
+});
 
 export function createGrepTool(options: FileSystemToolContext) {
   return tool({
     description: GREP_DESCRIPTION,
     inputSchema: z.object({
-      pattern: z.string().describe("RegExp pattern (body only, not wrapped in slashes)"),
+      pattern: z
+        .string()
+        .describe("RegExp pattern (body only, not wrapped in slashes)"),
       flags: z
         .string()
         .optional()
@@ -24,6 +36,7 @@ export function createGrepTool(options: FileSystemToolContext) {
         .optional()
         .describe("Optional glob of file paths to include (e.g. `src/**/*.ts`)"),
     }),
+    outputSchema: GrepOutputSchema,
     execute: async ({ pattern, flags, pathGlob }) => {
       assertSafeRegExpPattern(pattern);
       const re = new RegExp(pattern, flags ?? "");
@@ -50,10 +63,7 @@ export function createGrepTool(options: FileSystemToolContext) {
         );
       }
 
-      if (!matches.length) return "(no matches)";
-      return matches
-        .map((m) => `${m.path}:${m.line}: ${m.text}`)
-        .join("\n");
+      return { matches };
     },
   });
 }

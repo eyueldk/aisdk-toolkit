@@ -1,11 +1,33 @@
 import { tool } from "ai";
 import { z } from "zod";
+import type { ShellAdapter } from "../adapter";
+import {
+  AsyncChunkWritable,
+  mergeTaggedAsync,
+  takeStreamText,
+} from "../utils";
 import type { CreateShellToolsOptions } from "./index";
 
 const EXECUTE_COMMAND_DESCRIPTION =
-  "Run a shell command and return exit code, stdout, and stderr. Pass `cwd` to choose the working directory for this command.";
+  "Run a shell command. Streams stdout/stderr chunks, then an exit chunk with code and signal. Pass `cwd` to choose the working directory for this command.";
 
-const MAX_TOOL_OUTPUT_CHARS = 32_000;
+const MAX_STREAM_CHARS = 32_000;
+
+const ExecuteCommandOutputSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("stdout"),
+    text: z.string().describe("Stdout chunk"),
+  }),
+  z.object({
+    kind: z.literal("stderr"),
+    text: z.string().describe("Stderr chunk"),
+  }),
+  z.object({
+    kind: z.literal("exit"),
+    exitCode: z.number().int().describe("Process exit code"),
+    signal: z.string().nullable().describe("Termination signal, if any"),
+  }),
+]);
 
 export function createExecuteCommandTool(options: CreateShellToolsOptions) {
   return tool({
@@ -28,36 +50,76 @@ export function createExecuteCommandTool(options: CreateShellToolsOptions) {
         .optional()
         .describe("Optional timeout in milliseconds"),
     }),
-    execute: async ({ command, cwd, timeoutMs }) => {
-      const result = await options.adapter.exec(command, { cwd, timeoutMs });
-      return formatExecResult(result);
-    },
+    outputSchema: ExecuteCommandOutputSchema,
+    execute: ({ command, cwd, timeoutMs }) =>
+      streamExecuteCommand(options.adapter, command, { cwd, timeoutMs }),
   });
 }
 
 export { EXECUTE_COMMAND_DESCRIPTION };
 
-function formatExecResult(result: {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-  signal: string | null;
-}): string {
-  const parts = [`Exit code: ${result.exitCode}`];
-  if (result.signal) {
-    parts.push(`Signal: ${result.signal}`);
-  }
-  parts.push("", "--- stdout ---", truncateForTool(result.stdout));
-  if (result.stderr.length > 0) {
-    parts.push("", "--- stderr ---", truncateForTool(result.stderr));
-  }
-  return truncateForTool(parts.join("\n"));
-}
+async function* streamExecuteCommand(
+  adapter: ShellAdapter,
+  command: string,
+  execOptions: { cwd?: string; timeoutMs?: number },
+): AsyncGenerator<z.infer<typeof ExecuteCommandOutputSchema>> {
+  const stdout = new AsyncChunkWritable();
+  const stderr = new AsyncChunkWritable();
+  const execPromise = adapter.exec(command, {
+    cwd: execOptions.cwd,
+    timeoutMs: execOptions.timeoutMs,
+    stdout,
+    stderr,
+  });
 
-function truncateForTool(text: string): string {
-  if (text.length <= MAX_TOOL_OUTPUT_CHARS) {
-    return text;
+  let stdoutUsed = 0;
+  let stderrUsed = 0;
+  let stdoutTruncated = false;
+  let stderrTruncated = false;
+
+  for await (const { tag, value } of mergeTaggedAsync([
+    { tag: "stdout", iterable: stdout.chunks() },
+    { tag: "stderr", iterable: stderr.chunks() },
+  ])) {
+    if (tag === "stdout") {
+      const taken = takeStreamText(value, stdoutUsed, MAX_STREAM_CHARS);
+      stdoutUsed = taken.used;
+      if (taken.text) {
+        yield { kind: "stdout", text: taken.text };
+      }
+      if (stdoutUsed >= MAX_STREAM_CHARS && value.length > taken.text.length) {
+        stdoutTruncated = true;
+      }
+      continue;
+    }
+
+    const taken = takeStreamText(value, stderrUsed, MAX_STREAM_CHARS);
+    stderrUsed = taken.used;
+    if (taken.text) {
+      yield { kind: "stderr", text: taken.text };
+    }
+    if (stderrUsed >= MAX_STREAM_CHARS && value.length > taken.text.length) {
+      stderrTruncated = true;
+    }
   }
-  const omitted = text.length - MAX_TOOL_OUTPUT_CHARS;
-  return `${text.slice(0, MAX_TOOL_OUTPUT_CHARS)}\n\n[truncated ${omitted} characters]`;
+
+  if (stdoutTruncated) {
+    yield {
+      kind: "stderr",
+      text: `\n[stdout truncated at ${MAX_STREAM_CHARS} characters]`,
+    };
+  }
+  if (stderrTruncated) {
+    yield {
+      kind: "stderr",
+      text: `\n[stderr truncated at ${MAX_STREAM_CHARS} characters]`,
+    };
+  }
+
+  const result = await execPromise;
+  yield {
+    kind: "exit",
+    exitCode: result.exitCode,
+    signal: result.signal,
+  };
 }

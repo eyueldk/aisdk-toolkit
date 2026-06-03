@@ -7,6 +7,20 @@ import {
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 
+async function unwrapToolOutput<T>(output: T | AsyncIterable<T>): Promise<T> {
+  if (
+    output !== null &&
+    typeof output === "object" &&
+    Symbol.asyncIterator in output
+  ) {
+    for await (const value of output) {
+      return value;
+    }
+    throw new Error("Empty tool output stream");
+  }
+  return output;
+}
+
 describe("CompositeFileSystem", () => {
   test("routes reads and lists through mount prefixes", async () => {
     const sandbox = await MemoryFileSystem.create({
@@ -56,16 +70,20 @@ describe("CompositeFileSystem", () => {
     const tools = createFileSystemTools({ adapter });
 
     expect(
-      await tools.readFile.execute!(
-        { path: "left/a.txt" },
-        { ...toolOpts, messages: [] },
+      await unwrapToolOutput(
+        await tools.readFile.execute!(
+          { path: "left/a.txt" },
+          { ...toolOpts, messages: [] },
+        ),
       ),
-    ).toBe("A");
+    ).toEqual({ content: "A" });
     expect(
-      await tools.readFile.execute!(
-        { path: "right/b.txt" },
-        { ...toolOpts, messages: [] },
+      await unwrapToolOutput(
+        await tools.readFile.execute!(
+          { path: "right/b.txt" },
+          { ...toolOpts, messages: [] },
+        ),
       ),
-    ).toBe("B");
+    ).toEqual({ content: "B" });
   });
 });

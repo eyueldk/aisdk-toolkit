@@ -9,37 +9,93 @@ import {
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 
+async function unwrapToolOutput<T>(output: T | AsyncIterable<T>): Promise<T> {
+  if (
+    output !== null &&
+    typeof output === "object" &&
+    Symbol.asyncIterator in output
+  ) {
+    for await (const value of output) {
+      return value;
+    }
+    throw new Error("Empty tool output stream");
+  }
+  return output;
+}
+
 describe("readFile / writeFile / editFile / list tools", () => {
   test("round-trip writeFile, list, readFile, editFile", async () => {
     const adapter = await MemoryFileSystem.create();
     const tools = createFileSystemTools({ adapter });
 
-    await tools.writeFile.execute!(
-      { path: "src/hello.txt", contents: "hello world" },
-      { ...toolOpts, messages: [] },
+    const writeResult = await unwrapToolOutput(
+      await tools.writeFile.execute!(
+        { path: "src/hello.txt", contents: "hello world" },
+        { ...toolOpts, messages: [] },
+      ),
     );
+    expect(writeResult).toEqual({ created: true });
 
-    const listed = await tools.list.execute!(
-      { path: "src" },
-      { ...toolOpts, messages: [] },
+    const listed = await unwrapToolOutput(
+      await tools.list.execute!(
+        { path: "src" },
+        { ...toolOpts, messages: [] },
+      ),
     );
-    expect(String(listed)).toContain("hello.txt");
+    expect(listed.entries.length).toBeGreaterThan(0);
+    expect(listed.entries.some((e) => e.path.includes("hello.txt"))).toBe(true);
 
-    const body = await tools.readFile.execute!(
-      { path: "src/hello.txt" },
-      { ...toolOpts, messages: [] },
+    const body = await unwrapToolOutput(
+      await tools.readFile.execute!(
+        { path: "src/hello.txt" },
+        { ...toolOpts, messages: [] },
+      ),
     );
-    expect(body).toBe("hello world");
+    expect(body).toEqual({ content: "hello world" });
 
-    await tools.editFile.execute!(
-      {
-        path: "src/hello.txt",
-        oldText: "world",
-        newText: "there",
-      },
-      { ...toolOpts, messages: [] },
+    const editResult = await unwrapToolOutput(
+      await tools.editFile.execute!(
+        {
+          path: "src/hello.txt",
+          oldText: "world",
+          newText: "there",
+        },
+        { ...toolOpts, messages: [] },
+      ),
     );
-    expect((await adapter.readFile("src/hello.txt")).toString("utf8")).toBe("hello there");
+    expect(editResult).toMatchObject({ changed: true });
+    expect(editResult.diff).toContain("-hello world");
+    expect(editResult.diff).toContain("+hello there");
+    expect((await adapter.readFile("src/hello.txt")).toString("utf8")).toBe(
+      "hello there",
+    );
+  });
+});
+
+describe("writeFile tool", () => {
+  test("refuses overwrite unless overwrite is true", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: { "note.txt": "original" },
+    });
+    const tools = createFileSystemTools({ adapter });
+
+    await expect(
+      tools.writeFile.execute!(
+        { path: "note.txt", contents: "replacement" },
+        { ...toolOpts, messages: [] },
+      ),
+    ).rejects.toThrow(/Refusing to overwrite/);
+
+    const result = await unwrapToolOutput(
+      await tools.writeFile.execute!(
+        { path: "note.txt", contents: "replacement", overwrite: true },
+        { ...toolOpts, messages: [] },
+      ),
+    );
+    expect(result).toEqual({ created: false });
+    expect((await adapter.readFile("note.txt")).toString("utf8")).toBe(
+      "replacement",
+    );
   });
 });
 
@@ -71,12 +127,13 @@ describe("glob tool", () => {
       },
     });
     const tools = createFileSystemTools({ adapter });
-    const out = await tools.glob.execute!(
-      { pattern: "src/**/*.ts" },
-      { ...toolOpts, messages: [] },
+    const out = await unwrapToolOutput(
+      await tools.glob.execute!(
+        { pattern: "src/**/*.ts" },
+        { ...toolOpts, messages: [] },
+      ),
     );
-    expect(String(out)).toContain("src/a.ts");
-    expect(String(out)).not.toContain("b.js");
+    expect(out.paths).toEqual(["src/a.ts"]);
   });
 });
 
@@ -98,12 +155,14 @@ describe("list tool permissions", () => {
         },
       ],
     });
-    const out = await tools.list.execute!(
-      { path: "src", recursive: true },
-      { ...toolOpts, messages: [] },
+    const out = await unwrapToolOutput(
+      await tools.list.execute!(
+        { path: "src", recursive: true },
+        { ...toolOpts, messages: [] },
+      ),
     );
-    expect(String(out)).toContain("public.txt");
-    expect(String(out)).not.toContain("secret");
+    expect(out.entries.some((e) => e.path.includes("public.txt"))).toBe(true);
+    expect(out.entries.some((e) => e.path.includes("secret"))).toBe(false);
   });
 });
 
@@ -123,11 +182,14 @@ describe("grep tool", () => {
       ],
     });
 
-    await tools.grep.execute!(
-      { pattern: "hidden" },
-      { ...toolOpts, messages: [] },
+    const out = await unwrapToolOutput(
+      await tools.grep.execute!(
+        { pattern: "hidden" },
+        { ...toolOpts, messages: [] },
+      ),
     );
 
+    expect(out.matches).toHaveLength(0);
     const readPaths = readFile.mock.calls.map(([path]) => path);
     expect(readPaths).not.toContain("secret/leak.txt");
     readFile.mockRestore();
@@ -144,16 +206,23 @@ describe("grep tool", () => {
     ).rejects.toThrow(/Unsafe grep pattern/);
   });
 
-  test("returns path:line for matches", async () => {
+  test("returns structured matches", async () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: { "src/a.ts": "const a = 1\nother\n" },
     });
     const tools = createFileSystemTools({ adapter });
-    const out = await tools.grep.execute!(
-      { pattern: "const", pathGlob: "src/**/*.ts" },
-      { ...toolOpts, messages: [] },
+    const out = await unwrapToolOutput(
+      await tools.grep.execute!(
+        { pattern: "const", pathGlob: "src/**/*.ts" },
+        { ...toolOpts, messages: [] },
+      ),
     );
-    expect(String(out)).toContain("src/a.ts:1:");
+    expect(out.matches).toHaveLength(1);
+    expect(out.matches[0]).toEqual({
+      path: "src/a.ts",
+      line: 1,
+      text: "const a = 1",
+    });
   });
 });
 
@@ -163,9 +232,11 @@ describe("createFileSystemToolkit", () => {
       initialFiles: { "a.txt": "A" },
     });
     const { tools } = createFileSystemToolkit({ adapter });
-    expect(await tools.readFile.execute!({ path: "a.txt" }, { ...toolOpts, messages: [] })).toBe(
-      "A",
-    );
+    expect(
+      await unwrapToolOutput(
+        await tools.readFile.execute!({ path: "a.txt" }, { ...toolOpts, messages: [] }),
+      ),
+    ).toEqual({ content: "A" });
   });
 
   test("returns tools, hint, and state", async () => {

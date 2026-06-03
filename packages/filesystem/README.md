@@ -8,7 +8,7 @@ Pluggable filesystem tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap sto
 ## Features
 
 - **`createFileSystemToolkit({ adapter, permissions? })`** → `{ tools, hint, state }`
-- Tools: **`readFile`**, **`writeFile`**, **`editFile`**, **`list`**, **`glob`**, **`grep`**
+- Tools: **`readFile`**, **`writeFile`**, **`editFile`**, **`list`**, **`glob`**, **`grep`** — each returns a **structured object** (via AI SDK `outputSchema`)
 - Optional path **permissions** (first matching glob wins)
 - Adapters: memory, local disk, Docker container, Daytona sandbox, **composite** (multiple mounts)
 
@@ -94,6 +94,19 @@ const { tools, hint } = createFileSystemToolkit({ adapter });
 
 Paths like **`sandbox/src/app.ts`** route to the sandbox adapter; **`host/README.md`** routes to the host adapter. List **`/`** to see mount names.
 
+## Tool outputs
+
+Each tool returns a **structured JSON object** with result-only fields (inputs like `path` or `pattern` are not echoed back).
+
+| Tool | Result fields |
+| --- | --- |
+| **`readFile`** | `{ content }` |
+| **`writeFile`** | `{ created }` — requires **`overwrite: true`** to replace an existing file |
+| **`editFile`** | `{ changed, diff }` — **`diff`** is a unified diff (via [`diff`](https://github.com/kpdecker/jsdiff)) |
+| **`list`** | `{ entries: [{ type, path }] }` |
+| **`glob`** | `{ paths }` |
+| **`grep`** | `{ matches: [{ path, line, text }] }` |
+
 ## Permissions
 
 ```ts
@@ -106,6 +119,13 @@ createFileSystemToolkit({
 Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; no rule → allowed.
 
 ## Migration
+
+### 1.4 → 1.5
+
+- All tools return **structured JSON objects** (with `outputSchema`) instead of plain strings.
+- Outputs include **result-only fields** — tool inputs (`path`, `pattern`, etc.) and redundant counts are not echoed back.
+- **`writeFile`** requires **`overwrite: true`** to replace an existing file; returns **`{ created }`**.
+- **`editFile`** returns **`{ changed, diff }`** (unified diff via [`diff`](https://github.com/kpdecker/jsdiff)).
 
 ### 1.3 → 1.4
 
