@@ -1,7 +1,7 @@
 /** Optional system text when wiring {@link createShellToolkit}. */
 export const SHELL_HINT = `# shell tools
 
-You can run shell commands with **executeCommand**. Commands run in the configured environment (local host, a Docker container, or a remote host over SSH).
+You can run shell commands with **executeCommand**. Pass **cwd** on each call when the command should run outside the adapter default directory.
 
 - Prefer short, focused commands; inspect **stdout** / **stderr** and the **exit code** in the tool result.
 - Avoid destructive commands unless the user explicitly asked for them.

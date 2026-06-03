@@ -5,12 +5,12 @@ import { matchGrepLines } from "../adapter";
 import { collectReadableFilePaths } from "../permissions";
 import { minimatch } from "minimatch";
 import { normalizeGlobPattern, resolvePath } from "../path";
-import type { CreateFileSystemToolsOptions } from "./index";
+import type { FileSystemToolContext } from "./index";
 
 const GREP_DESCRIPTION =
   "Search UTF-8 file contents with a JavaScript RegExp (`pattern` string, optional `flags`). Optional `pathGlob` limits which files are searched (default: all files). Returns matches as `path:line: text` lines.";
 
-export function createGrepTool(options: CreateFileSystemToolsOptions) {
+export function createGrepTool(options: FileSystemToolContext) {
   return tool({
     description: GREP_DESCRIPTION,
     inputSchema: z.object({

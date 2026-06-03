@@ -2,12 +2,12 @@ import { tool } from "ai";
 import { z } from "zod";
 import { collectVisibleEntries, enforcePermissions } from "../permissions";
 import { resolvePath } from "../path";
-import type { CreateFileSystemToolsOptions } from "./index";
+import type { FileSystemToolContext } from "./index";
 
 const LIST_DESCRIPTION =
   "List entries under `path` with `type` (file or dir) and `path` via the adapter `ls`. Optional `recursive` lists the whole subtree (flat).";
 
-export function createListTool(options: CreateFileSystemToolsOptions) {
+export function createListTool(options: FileSystemToolContext) {
   return tool({
     description: LIST_DESCRIPTION,
     inputSchema: z.object({

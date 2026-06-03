@@ -10,7 +10,7 @@ Pluggable filesystem tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap sto
 - **`createFileSystemToolkit({ adapter, permissions? })`** → `{ tools, hint, state }`
 - Tools: **`readFile`**, **`writeFile`**, **`editFile`**, **`list`**, **`glob`**, **`grep`**
 - Optional path **permissions** (first matching glob wins)
-- Adapters: memory, local disk, Docker container, Daytona sandbox
+- Adapters: memory, local disk, Docker container, Daytona sandbox, **composite** (multiple mounts)
 
 ## Install
 
@@ -50,6 +50,7 @@ await generateText({
 | **MemoryFileSystem** | `await MemoryFileSystem.create({ initialFiles? })` | Volatile; tests and sandboxes |
 | **LocalFileSystem** | `await LocalFileSystem.create({ root })` | Host paths under **`root`**; symlinks cannot escape **`root`** |
 | **DockerFileSystem** | `await DockerFileSystem.create({ container, root?, docker? })` | Running container; list via **`find`** |
+| **CompositeFileSystem** | `CompositeFileSystem.create({ mounts })` | Virtual union of adapters; mount keys must not overlap/nest |
 | **DaytonaFileSystem** | `await DaytonaFileSystem.create({ sandbox, root? })` or `{ sandboxId?, daytona? }` | Default **`root`**: `workspace` |
 
 ```ts
@@ -70,6 +71,29 @@ const adapter = await DaytonaFileSystem.create({ sandbox, root: "workspace" });
 
 Adapter paths are POSIX and normalized with **`resolvePath`**. **`..`** is allowed when the resolved path stays inside **`root`**.
 
+## Composite mounts
+
+Combine adapters under virtual paths (mount keys must not nest):
+
+```ts
+import {
+  CompositeFileSystem,
+  createFileSystemToolkit,
+  LocalFileSystem,
+  MemoryFileSystem,
+} from "@eyueldk/aisdk-toolkit-filesystem";
+
+const sandbox = await MemoryFileSystem.create();
+const host = await LocalFileSystem.create({ root: "/project" });
+const adapter = CompositeFileSystem.create({
+  mounts: { "/sandbox": sandbox, "/host": host },
+});
+
+const { tools, hint } = createFileSystemToolkit({ adapter });
+```
+
+Paths like **`sandbox/src/app.ts`** route to the sandbox adapter; **`host/README.md`** routes to the host adapter. List **`/`** to see mount names.
+
 ## Permissions
 
 ```ts
@@ -82,6 +106,10 @@ createFileSystemToolkit({
 Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; no rule → allowed.
 
 ## Migration
+
+### 1.3 → 1.4
+
+- **`CompositeFileSystem.create({ mounts })`** — combine adapters at virtual paths (e.g. `{ "/sandbox": sandboxAdapter }`); pass the result to **`createFileSystemToolkit({ adapter })`**.
 
 ### 1.2 → 1.3
 

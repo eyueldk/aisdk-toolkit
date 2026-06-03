@@ -3,12 +3,12 @@ import { z } from "zod";
 import { minimatch } from "minimatch";
 import { collectReadableFilePaths } from "../permissions";
 import { normalizeGlobPattern, resolvePath } from "../path";
-import type { CreateFileSystemToolsOptions } from "./index";
+import type { FileSystemToolContext } from "./index";
 
 const GLOB_DESCRIPTION =
   "List file paths matching a POSIX glob (minimatch semantics, forward slashes). Returns paths one per line; empty if nothing matches or all matches are denied by permissions.";
 
-export function createGlobTool(options: CreateFileSystemToolsOptions) {
+export function createGlobTool(options: FileSystemToolContext) {
   return tool({
     description: GLOB_DESCRIPTION,
     inputSchema: z.object({

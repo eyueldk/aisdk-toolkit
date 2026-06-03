@@ -2,12 +2,12 @@ import { tool } from "ai";
 import { z } from "zod";
 import { enforcePermissions } from "../permissions";
 import { resolvePath } from "../path";
-import type { CreateFileSystemToolsOptions } from "./index";
+import type { FileSystemToolContext } from "./index";
 
 const READ_FILE_DESCRIPTION =
   "Read the full UTF-8 text of a file at `path`. Use for inspecting source, configs, or logs before editing.";
 
-export function createReadFileTool(options: CreateFileSystemToolsOptions) {
+export function createReadFileTool(options: FileSystemToolContext) {
   return tool({
     description: READ_FILE_DESCRIPTION,
     inputSchema: z.object({

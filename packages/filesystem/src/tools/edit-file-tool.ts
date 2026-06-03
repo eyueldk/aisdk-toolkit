@@ -2,12 +2,12 @@ import { tool } from "ai";
 import { z } from "zod";
 import { enforcePermissions } from "../permissions";
 import { resolvePath } from "../path";
-import type { CreateFileSystemToolsOptions } from "./index";
+import type { FileSystemToolContext } from "./index";
 
 const EDIT_FILE_DESCRIPTION =
   "Edit a file by replacing `oldText` with `newText` in the UTF-8 contents at `path`. Fails if `oldText` is not found (unless `optional` is true).";
 
-export function createEditFileTool(options: CreateFileSystemToolsOptions) {
+export function createEditFileTool(options: FileSystemToolContext) {
   return tool({
     description: EDIT_FILE_DESCRIPTION,
     inputSchema: z.object({

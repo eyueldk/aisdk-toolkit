@@ -1,3 +1,6 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import {
   LocalShell,
@@ -26,5 +29,16 @@ describe("createShellToolkit", () => {
     expect(typeof out).toBe("string");
     expect(out).toContain("Exit code: 0");
     expect(out).toContain("hi");
+  });
+
+  test("executeCommand cwd selects working directory", async () => {
+    const workDir = mkdtempSync(join(tmpdir(), "aisdk-shell-cwd-"));
+    const adapter = await LocalShell.create();
+    const { executeCommand } = createShellToolkit({ adapter }).tools;
+    const out = await executeCommand.execute!(
+      { command: "node -p \"process.cwd()\"", cwd: workDir },
+      { ...toolOpts, messages: [] },
+    );
+    expect(out).toContain(workDir);
   });
 });

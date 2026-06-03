@@ -1,4 +1,6 @@
+import type { FileSystemAdapter } from "./adapter";
 import { FILE_SYSTEM_HINT } from "./hint";
+import type { FileSystemPermissionRule } from "./permissions";
 import {
   createFileSystemTools,
   type CreateFileSystemToolsOptions,
@@ -12,12 +14,15 @@ export type Toolkit<TTools extends Record<string, unknown>, TState> = {
 
 export type FileSystemTools = ReturnType<typeof createFileSystemTools>;
 
-export type FileSystemToolkitState = CreateFileSystemToolsOptions;
+export type FileSystemToolkitState = {
+  adapter: FileSystemAdapter;
+  permissions?: FileSystemPermissionRule[];
+};
 
 export type FileSystemToolkit = Toolkit<FileSystemTools, FileSystemToolkitState>;
 
 /**
- * Primary entry point: AI SDK `tools`, bundled `hint`, and `{ adapter, permissions }` on `state`.
+ * Primary entry point: AI SDK `tools`, bundled `hint`, and `{ adapter, permissions? }` on `state`.
  */
 export function createFileSystemToolkit(
   options: CreateFileSystemToolsOptions,

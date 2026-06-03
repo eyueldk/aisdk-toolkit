@@ -2,12 +2,12 @@ import { tool } from "ai";
 import { z } from "zod";
 import { enforcePermissions } from "../permissions";
 import { resolvePath } from "../path";
-import type { CreateFileSystemToolsOptions } from "./index";
+import type { FileSystemToolContext } from "./index";
 
 const WRITE_FILE_DESCRIPTION =
   "Write UTF-8 text to a file at `path`, replacing any existing file contents. Creates parent directories when the adapter supports it.";
 
-export function createWriteFileTool(options: CreateFileSystemToolsOptions) {
+export function createWriteFileTool(options: FileSystemToolContext) {
   return tool({
     description: WRITE_FILE_DESCRIPTION,
     inputSchema: z.object({

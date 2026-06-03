@@ -7,6 +7,11 @@ import { createListTool } from "./list-tool";
 import { createReadFileTool } from "./read-file-tool";
 import { createWriteFileTool } from "./write-file-tool";
 
+export type FileSystemToolContext = {
+  adapter: FileSystemAdapter;
+  permissions?: FileSystemPermissionRule[];
+};
+
 export type CreateFileSystemToolsOptions = {
   adapter: FileSystemAdapter;
   permissions?: FileSystemPermissionRule[];
@@ -14,7 +19,7 @@ export type CreateFileSystemToolsOptions = {
 
 /**
  * Builds filesystem AI SDK tools (`readFile`, `writeFile`, `editFile`, `list`, `glob`, `grep`) for the Vercel AI SDK.
- * Pass `{ adapter, permissions? }` — same object {@link createFileSystemToolkit} accepts (toolkit adds `hint` and mirrors `state`).
+ * Pass `{ adapter, permissions? }` — same object {@link createFileSystemToolkit} accepts.
  */
 export function createFileSystemTools(options: CreateFileSystemToolsOptions) {
   const ctx = {

@@ -25,6 +25,10 @@ export {
   MemoryFileSystem,
   type MemoryFileSystemCreateOptions,
 } from "./adapters/memory-adapter";
+export {
+  CompositeFileSystem,
+  type CompositeFileSystemCreateOptions,
+} from "./adapters/composite-adapter";
 export { FILE_SYSTEM_HINT } from "./hint";
 export { normalizeGlobPattern, resolvePath } from "./path";
 export {

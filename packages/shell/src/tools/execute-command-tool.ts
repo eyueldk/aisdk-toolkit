@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { CreateShellToolsOptions } from "./index";
 
 const EXECUTE_COMMAND_DESCRIPTION =
-  "Run a shell command and return exit code, stdout, and stderr. Use for builds, scripts, git, package managers, and other CLI tasks.";
+  "Run a shell command and return exit code, stdout, and stderr. Pass `cwd` to choose the working directory for this command.";
 
 const MAX_TOOL_OUTPUT_CHARS = 32_000;
 
@@ -18,7 +18,9 @@ export function createExecuteCommandTool(options: CreateShellToolsOptions) {
       cwd: z
         .string()
         .optional()
-        .describe("Optional working directory for this command only"),
+        .describe(
+          "Working directory to run the command in; omit to use the adapter default",
+        ),
       timeoutMs: z
         .number()
         .int()
