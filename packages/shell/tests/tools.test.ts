@@ -62,6 +62,48 @@ describe("createShellToolkit", () => {
     expect(chunks.at(-1)).toEqual(exit);
   });
 
+  test("executeCommand toModelOutput sends stdout as plain text", async () => {
+    const { executeCommand } = createShellToolkit({
+      adapter: await LocalShell.create(),
+    }).tools;
+
+    expect(
+      executeCommand.toModelOutput?.({
+        toolCallId: "test",
+        input: { command: "echo hi" },
+        output: { kind: "stdout", text: "hi\n" },
+      }),
+    ).toEqual({ type: "text", value: "hi\n" });
+    expect(
+      executeCommand.toModelOutput?.({
+        toolCallId: "test",
+        input: { command: "echo err >&2" },
+        output: { kind: "stderr", text: "err\n" },
+      }),
+    ).toEqual({ type: "text", value: "[stderr] err\n" });
+  });
+
+  test("executeCommand captures stderr without shell redirect", async () => {
+    const adapter = await LocalShell.create();
+    const { executeCommand } = createShellToolkit({ adapter }).tools;
+    const command =
+      process.platform === "win32"
+        ? "cmd /c \"echo err 1>&2\""
+        : "echo err >&2";
+    const chunks = await collectExecuteCommandOutput(
+      await executeCommand.execute!(
+        { command },
+        { ...toolOpts, messages: [] },
+      ),
+    );
+
+    expect(
+      chunks.some(
+        (chunk) => chunk.kind === "stderr" && chunk.text.includes("err"),
+      ),
+    ).toBe(true);
+  });
+
   test("executeCommand cwd selects working directory", async () => {
     const workDir = mkdtempSync(join(tmpdir(), "aisdk-shell-cwd-"));
     const adapter = await LocalShell.create();

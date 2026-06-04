@@ -4,38 +4,69 @@ import type { BrowserInstance } from "../browser/browser-instance";
 import { getPageView } from "../utils";
 import { ActiveTargetSchema, ViewAfterSchema } from "../schema";
 
+const EVALUATE_DESCRIPTION =
+  "Run JavaScript in the active page via Playwright evaluate (expression or statements). Prefer inspectHTML for DOM markup. Returns a structured result value.";
+
+const EvaluateOutputSchema = z.object({
+  value: z
+    .unknown()
+    .optional()
+    .describe("Return value when the script produced one (JSON-serializable)"),
+  undefined: z
+    .literal(true)
+    .optional()
+    .describe("Present when the script returned no value (undefined)"),
+  view: z
+    .string()
+    .optional()
+    .describe("Page snapshot when viewAfter was requested"),
+  error: z
+    .string()
+    .optional()
+    .describe("Execution error message when the script failed"),
+});
+
 export function createEvaluateTool({ browser }: { browser: BrowserInstance }) {
   return tool({
-    description: "Execute JavaScript on the active browser page",
+    description: EVALUATE_DESCRIPTION,
     inputSchema: z
       .object({
         script: z
           .string()
           .describe(
-            "JavaScript expression or statements to run in the page; the last expression value is returned.",
+            "JavaScript to run in the page (Playwright evaluate — expression or statements).",
           ),
         viewAfter: ViewAfterSchema,
       })
       .extend(ActiveTargetSchema.shape),
+    outputSchema: EvaluateOutputSchema,
     execute: async ({ script, viewAfter, contextId, pageId }) => {
       try {
         return await browser.withPage(async (page) => {
-          const result = await page.evaluate((code: string) => {
-            const fn = new Function(`return (${code});`);
-            return fn();
-          }, script);
-          const base = `Execution result: ${JSON.stringify(result)}`;
-          const output = [base];
+          const result = await page.evaluate(script);
+          const output = formatEvaluateResult(result);
           if (viewAfter) {
-            output.push(await getPageView(page, viewAfter.format));
+            output.view = await getPageView(page, viewAfter.format);
           }
-          return output.join("\n\n");
+          return output;
         }, { contextId, pageId });
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return `Execution failed with error: ${errorMessage}`;
+        return {
+          error:
+            error instanceof Error ? error.message : String(error),
+        };
       }
     },
   });
+}
+
+export { EVALUATE_DESCRIPTION };
+
+function formatEvaluateResult(result: unknown): z.infer<typeof EvaluateOutputSchema> {
+  if (result === undefined) {
+    return {
+      undefined: true,
+    };
+  }
+  return { value: result };
 }

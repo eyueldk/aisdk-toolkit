@@ -92,6 +92,10 @@ Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
 | **`stderr`** | `{ text }` |
 | **`exit`** | `{ exitCode, signal }` — always last |
 
+Chunks are mapped to plain text for the model via **`toModelOutput`**: stdout passes through; stderr is prefixed with **`[stderr]`**; exit becomes **`[exit N]`**.
+
+**Do not** add `2>&1` to commands — stdout and stderr are already captured on separate streams.
+
 ### `adapter.exec` (advanced)
 
 | Option | Default | Description |
@@ -104,6 +108,16 @@ Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
 **Daytona:** set **`DAYTONA_API_KEY`** (and **`DAYTONA_API_URL`** for self-hosted). **`stderr`** in results is always empty (API returns combined stdout).
 
 ## Migration
+
+### 1.4.1 → 1.4.2
+
+- Tool description and hint: **do not** use `2>&1` — stdout and stderr are captured separately.
+- **`toModelOutput`** prefixes stderr with **`[stderr]`** so the model can tell streams apart.
+
+### 1.4.0 → 1.4.1
+
+- **`toModelOutput`** sends stdout/stderr chunks to the model as plain text (fixes agents missing piped stdout).
+- Fallback flush when stream hooks yield nothing but **`exec`** buffered stdout/stderr.
 
 ### 1.3 → 1.4
 

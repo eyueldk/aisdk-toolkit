@@ -76,8 +76,25 @@ describe("Browser Tools Integration Tests", () => {
       { ...toolOpts, messages: [] },
     );
 
-    expect(typeof result).toBe("string");
-    expect(result).toContain("2");
+    expect(result).toEqual({ value: 2 });
+  });
+
+  test("evaluate reports undefined when script has no return value", async () => {
+    const result = await tools.evaluate.execute!(
+      { script: "void 0" },
+      { ...toolOpts, messages: [] },
+    );
+
+    expect(result).toEqual({ undefined: true });
+  });
+
+  test("evaluate runs statement scripts via Playwright evaluate", async () => {
+    const result = await tools.evaluate.execute!(
+      { script: "document.title" },
+      { ...toolOpts, messages: [] },
+    );
+
+    expect(result).toMatchObject({ value: expect.any(String) });
   });
 
   test("type tool should type text into an input", async () => {

@@ -5,8 +5,8 @@ You control real browser pages via Playwright-backed tools. **Action tools run o
 
 - **Lifecycle:** \`newContext\`, \`newPage\` (creates and activates), \`selectContext\`, \`selectPage\`, \`listContexts\`, \`closePage\` (active page), \`closeContext\` (active context).
 - **Navigation:** \`goto\` with a full URL.
-- **Understanding the page:** \`viewPage\` (\`format\`: \`simplified\`, \`accessibility\`, or \`markdown\`), \`inspectHTML\`, \`getScreenshot\` (multimodal).
-- **Interaction:** \`click\` and \`type\` with CSS selectors. Use \`evaluate\` only for small, scoped scripts.
+- **Understanding the page:** \`viewPage\` (\`format\`: \`simplified\`, \`accessibility\`, or \`markdown\`), \`inspectHTML\` (prefer over \`evaluate\` for DOM markup), \`getScreenshot\` (multimodal).
+- **Interaction:** \`click\` and \`type\` with CSS selectors. Use \`evaluate\` for small scripts; it returns \`{ value }\` or \`{ undefined: true }\` when the script has no return value.
 - **Diagnostics:** \`inspectConsole\` and \`inspectNetwork\` read **recent ring buffers** (not full history); tool output may truncate large fields.
 - **Cookies:** \`getCookies\` for the active page's context.
 

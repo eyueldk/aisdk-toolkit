@@ -53,6 +53,17 @@ Lifecycle: **`newContext`**, **`newPage`**, **`selectContext`**, **`selectPage`*
 
 Actions (active page; optional **`pageId`** / **`contextId`** shortcuts): **`goto`**, **`click`**, **`type`**, **`evaluate`**, **`viewPage`**, **`inspectHTML`**, **`getScreenshot`**, **`inspectConsole`**, **`inspectNetwork`**, **`getCookies`**.
 
+### `evaluate` output
+
+| Field | Description |
+| --- | --- |
+| **`value`** | JSON-serializable return value |
+| **`undefined`** | `true` when the script returned no value |
+| **`view`** | Optional page snapshot when **`viewAfter`** was set |
+| **`error`** | Error message when execution failed |
+
+Uses Playwright **`page.evaluate(script)`** directly (no custom `Function` wrapper). Prefer **`inspectHTML`** for DOM markup.
+
 ## Configuration
 
 | Option | Description |
@@ -71,6 +82,10 @@ await tools.goto.execute({
 ```
 
 ## Migration
+
+### 2.1 → 2.2
+
+- **`evaluate`** returns structured **`{ value }`** or **`{ undefined: true }`** (via **`outputSchema`**); uses Playwright **`page.evaluate(script)`** directly.
 
 ### 2.1.x
 

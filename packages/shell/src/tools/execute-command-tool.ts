@@ -9,7 +9,7 @@ import {
 import type { CreateShellToolsOptions } from "./index";
 
 const EXECUTE_COMMAND_DESCRIPTION =
-  "Run a shell command. Streams stdout/stderr chunks, then an exit chunk with code and signal. Pass `cwd` to choose the working directory for this command.";
+  "Run a shell command. Captures stdout and stderr separately as streamed chunks (do not append shell redirects like 2>&1 — stderr is already returned in its own chunks). Ends with an exit chunk. Pass cwd to set the working directory.";
 
 const MAX_STREAM_CHARS = 32_000;
 
@@ -29,6 +29,8 @@ const ExecuteCommandOutputSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
+type ExecuteCommandChunk = z.infer<typeof ExecuteCommandOutputSchema>;
+
 export function createExecuteCommandTool(options: CreateShellToolsOptions) {
   return tool({
     description: EXECUTE_COMMAND_DESCRIPTION,
@@ -36,7 +38,9 @@ export function createExecuteCommandTool(options: CreateShellToolsOptions) {
       command: z
         .string()
         .min(1)
-        .describe("Shell command string (interpreted by the system shell)"),
+        .describe(
+          "Shell command string. Do not add 2>&1 or merge stderr — the tool captures stdout and stderr separately.",
+        ),
       cwd: z
         .string()
         .optional()
@@ -53,6 +57,7 @@ export function createExecuteCommandTool(options: CreateShellToolsOptions) {
     outputSchema: ExecuteCommandOutputSchema,
     execute: ({ command, cwd, timeoutMs }) =>
       streamExecuteCommand(options.adapter, command, { cwd, timeoutMs }),
+    toModelOutput: ({ output }) => formatExecuteCommandChunkForModel(output),
   });
 }
 
@@ -62,7 +67,7 @@ async function* streamExecuteCommand(
   adapter: ShellAdapter,
   command: string,
   execOptions: { cwd?: string; timeoutMs?: number },
-): AsyncGenerator<z.infer<typeof ExecuteCommandOutputSchema>> {
+): AsyncGenerator<ExecuteCommandChunk> {
   const stdout = new AsyncChunkWritable();
   const stderr = new AsyncChunkWritable();
   const execPromise = adapter.exec(command, {
@@ -103,6 +108,30 @@ async function* streamExecuteCommand(
     }
   }
 
+  const result = await execPromise;
+
+  if (stdoutUsed === 0 && result.stdout.length > 0) {
+    const taken = takeStreamText(result.stdout, 0, MAX_STREAM_CHARS);
+    stdoutUsed = taken.used;
+    if (taken.text) {
+      yield { kind: "stdout", text: taken.text };
+    }
+    if (result.stdout.length > taken.text.length) {
+      stdoutTruncated = true;
+    }
+  }
+
+  if (stderrUsed === 0 && result.stderr.length > 0) {
+    const taken = takeStreamText(result.stderr, 0, MAX_STREAM_CHARS);
+    stderrUsed = taken.used;
+    if (taken.text) {
+      yield { kind: "stderr", text: taken.text };
+    }
+    if (result.stderr.length > taken.text.length) {
+      stderrTruncated = true;
+    }
+  }
+
   if (stdoutTruncated) {
     yield {
       kind: "stderr",
@@ -116,10 +145,26 @@ async function* streamExecuteCommand(
     };
   }
 
-  const result = await execPromise;
   yield {
     kind: "exit",
     exitCode: result.exitCode,
     signal: result.signal,
+  };
+}
+
+function formatExecuteCommandChunkForModel(output: ExecuteCommandChunk): {
+  type: "text";
+  value: string;
+} {
+  if (output.kind === "stdout") {
+    return { type: "text", value: output.text };
+  }
+  if (output.kind === "stderr") {
+    return { type: "text", value: `[stderr] ${output.text}` };
+  }
+  const signal = output.signal ? ` signal=${output.signal}` : "";
+  return {
+    type: "text",
+    value: `\n[exit ${output.exitCode}${signal}]`,
   };
 }

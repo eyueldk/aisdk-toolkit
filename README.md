@@ -8,11 +8,11 @@ Monorepo for [**@eyueldk/aisdk-toolkit-***](https://github.com/eyueldk/aisdk-too
 
 | Package | Version | Docs |
 | --- | --- | --- |
-| [@eyueldk/aisdk-toolkit-browser](packages/browser) | 2.1.3 | Playwright browser automation (active page, CDP attach) |
+| [@eyueldk/aisdk-toolkit-browser](packages/browser) | 2.2.0 | Playwright tools; structured **`evaluate`** |
 | [@eyueldk/aisdk-toolkit-fetch](packages/fetch) | 1.0.0 | HTTP `fetchRequest` tool |
 | [@eyueldk/aisdk-toolkit-todos](packages/todos) | 1.2.1 | `writeTodos` / `readTodos` |
 | [@eyueldk/aisdk-toolkit-filesystem](packages/filesystem) | 1.5.0 | `readFile` / … / structured tool outputs |
-| [@eyueldk/aisdk-toolkit-shell](packages/shell) | 1.4.0 | `executeCommand` streaming structured output |
+| [@eyueldk/aisdk-toolkit-shell](packages/shell) | 1.4.2 | `executeCommand` separate stdout/stderr |
 
 Each package is published independently to npm. Install and usage live in that package’s README.
 
