@@ -2,6 +2,12 @@ import { PassThrough } from "node:stream";
 import { buffer } from "node:stream/consumers";
 import { beforeAll, describe, expect, test } from "vitest";
 import { LocalShell } from "../src/index";
+import {
+  expectAdapterSeparatesStdoutStderr,
+  expectAdapterStreamsStdoutStderr,
+  expectExecuteCommandSeparatesStdoutStderr,
+  localDualStreamCommand,
+} from "./stream-output.helpers";
 
 describe("LocalShell", () => {
   let shell: LocalShell;
@@ -60,5 +66,23 @@ describe("LocalShell", () => {
     if (process.platform !== "win32") {
       expect(result.stderr).toContain("err");
     }
+  });
+
+  test("keeps stdout and stderr separate", async () => {
+    await expectAdapterSeparatesStdoutStderr(
+      shell,
+      localDualStreamCommand(),
+    );
+  });
+
+  test("streams stdout and stderr to separate writables", async () => {
+    await expectAdapterStreamsStdoutStderr(shell, localDualStreamCommand());
+  });
+
+  test("executeCommand keeps stdout and stderr separate", async () => {
+    await expectExecuteCommandSeparatesStdoutStderr(
+      shell,
+      localDualStreamCommand(),
+    );
   });
 });

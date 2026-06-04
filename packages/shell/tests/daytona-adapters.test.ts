@@ -1,6 +1,7 @@
 import { Daytona } from "@daytonaio/sdk";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { DaytonaShell } from "../src/index";
+import { SH_DUAL_STREAM_CMD } from "./stream-output.helpers";
 
 const hasDaytonaKey = Boolean(process.env.DAYTONA_API_KEY?.trim());
 
@@ -31,4 +32,15 @@ describe("DaytonaShell", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout.trim()).toBe("from-daytona");
   });
+
+  test.skipIf(!ready)(
+    "exec returns stdout only (Daytona API has no separate stderr)",
+    async () => {
+      const shell = await DaytonaShell.create({ sandbox, cwd: "workspace" });
+      const result = await shell.exec(SH_DUAL_STREAM_CMD);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("stdout-msg");
+      expect(result.stderr).toBe("");
+    },
+  );
 });

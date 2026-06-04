@@ -2,6 +2,12 @@ import Dockerode from "dockerode";
 import { GenericContainer, type StartedTestContainer } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { SshShell } from "../src/index";
+import {
+  expectAdapterSeparatesStdoutStderr,
+  expectAdapterStreamsStdoutStderr,
+  expectExecuteCommandSeparatesStdoutStderr,
+  SH_DUAL_STREAM_CMD,
+} from "./stream-output.helpers";
 
 const SSH_PASSWORD = "aisdk-toolkit-shell-test";
 
@@ -94,6 +100,48 @@ describe.skipIf(!hasDocker)("SshShell", () => {
       const result = await shell.exec("sh -c 'echo oops 1>&2; exit 9'");
       expect(result.exitCode).toBe(9);
       expect(result.stderr).toContain("oops");
+    } finally {
+      await shell.dispose();
+    }
+  });
+
+  test("keeps stdout and stderr separate", async () => {
+    const shell = await SshShell.create({
+      host,
+      port,
+      username: "root",
+      password: SSH_PASSWORD,
+    });
+    try {
+      await expectAdapterSeparatesStdoutStderr(shell, SH_DUAL_STREAM_CMD);
+    } finally {
+      await shell.dispose();
+    }
+  });
+
+  test("streams stdout and stderr to separate writables", async () => {
+    const shell = await SshShell.create({
+      host,
+      port,
+      username: "root",
+      password: SSH_PASSWORD,
+    });
+    try {
+      await expectAdapterStreamsStdoutStderr(shell, SH_DUAL_STREAM_CMD);
+    } finally {
+      await shell.dispose();
+    }
+  });
+
+  test("executeCommand keeps stdout and stderr separate", async () => {
+    const shell = await SshShell.create({
+      host,
+      port,
+      username: "root",
+      password: SSH_PASSWORD,
+    });
+    try {
+      await expectExecuteCommandSeparatesStdoutStderr(shell, SH_DUAL_STREAM_CMD);
     } finally {
       await shell.dispose();
     }

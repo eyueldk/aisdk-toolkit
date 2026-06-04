@@ -7,30 +7,13 @@ import {
   SHELL_HINT,
   createShellToolkit,
 } from "../src/index";
+import {
+  collectExecuteCommandOutput,
+  expectExecuteCommandSeparatesStdoutStderr,
+  localDualStreamCommand,
+} from "./stream-output.helpers";
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
-
-type ExecuteCommandChunk =
-  | { kind: "stdout"; text: string }
-  | { kind: "stderr"; text: string }
-  | { kind: "exit"; exitCode: number; signal: string | null };
-
-async function collectExecuteCommandOutput(
-  output: ExecuteCommandChunk | AsyncIterable<ExecuteCommandChunk>,
-): Promise<ExecuteCommandChunk[]> {
-  if (
-    output !== null &&
-    typeof output === "object" &&
-    Symbol.asyncIterator in output
-  ) {
-    const chunks: ExecuteCommandChunk[] = [];
-    for await (const chunk of output) {
-      chunks.push(chunk);
-    }
-    return chunks;
-  }
-  return [output];
-}
 
 describe("createShellToolkit", () => {
   test("returns tools, hint, and state", async () => {
@@ -102,6 +85,47 @@ describe("createShellToolkit", () => {
         (chunk) => chunk.kind === "stderr" && chunk.text.includes("err"),
       ),
     ).toBe(true);
+  });
+
+  test("executeCommand keeps stdout and stderr separate in one run", async () => {
+    const adapter = await LocalShell.create();
+    await expectExecuteCommandSeparatesStdoutStderr(
+      adapter,
+      localDualStreamCommand(),
+    );
+  });
+
+  test("executeCommand toModelOutput maps both streams from a combined run", async () => {
+    const adapter = await LocalShell.create();
+    const { executeCommand } = createShellToolkit({ adapter }).tools;
+    const command = localDualStreamCommand();
+    const chunks = await collectExecuteCommandOutput(
+      await executeCommand.execute!(
+        { command },
+        { ...toolOpts, messages: [] },
+      ),
+    );
+
+    const modelText = (
+      await Promise.all(
+        chunks.map((output) =>
+          Promise.resolve(
+            executeCommand.toModelOutput?.({
+              toolCallId: "test",
+              input: { command },
+              output,
+            }),
+          ),
+        ),
+      )
+    )
+      .map((part) => (part?.type === "text" ? part.value : ""))
+      .join("");
+
+    expect(modelText).toContain("stdout-msg");
+    expect(modelText).toContain("[stderr] stderr-msg");
+    expect(modelText).not.toMatch(/\[stderr\].*stdout-msg/);
+    expect(modelText).toMatch(/\[exit 0\]/);
   });
 
   test("executeCommand cwd selects working directory", async () => {
