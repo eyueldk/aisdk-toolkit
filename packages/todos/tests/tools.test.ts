@@ -55,52 +55,12 @@ describe("writeTodos tool", () => {
   });
 });
 
-describe("readTodos tool", () => {
-  test("returns markdown for empty list", async () => {
-    const state: TodoState = { todos: [] };
-    const { readTodos } = createTodoTools({ state });
-
-    const result = await readTodos.execute!(
-      {},
-      { ...toolOpts, messages: [] },
-    );
-
-    expect(typeof result).toBe("string");
-    expect(result).toContain("## Todos");
-    expect(result).toContain("No tasks yet");
-  });
-
-  test("returns markdown list after writeTodos", async () => {
-    const state: TodoState = { todos: [] };
-    const { writeTodos, readTodos } = createTodoTools({ state });
-
-    await writeTodos.execute!(
-      {
-        todos: [
-          { content: "Alpha", status: "in_progress" },
-          { content: "Beta|gamma", status: "pending" },
-        ],
-      },
-      { ...toolOpts, messages: [] },
-    );
-
-    const result = await readTodos.execute!(
-      {},
-      { ...toolOpts, messages: [] },
-    );
-
-    expect(result).toContain("## Todos (2)");
-    expect(result).toContain("- **in_progress:** Alpha");
-    expect(result).toContain("- **pending:** Beta|gamma");
-  });
-});
-
 describe("createTodosToolkit", () => {
   test("returns tools, hint, and state", () => {
     const state: TodoState = { todos: [] };
     const kit = createTodosToolkit({ state });
     expect(kit.tools.writeTodos).toBeDefined();
-    expect(kit.tools.readTodos).toBeDefined();
+    expect("readTodos" in kit.tools).toBe(false);
     expect(kit.hint).toBe(TODOS_HINT);
     expect(kit.state).toBe(state);
   });

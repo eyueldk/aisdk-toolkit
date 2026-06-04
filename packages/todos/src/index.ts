@@ -5,10 +5,6 @@ export {
   type Todo,
   type TodoStatus,
 } from "./tools/write-todos-tool";
-export {
-  createReadTodosTool,
-  READ_TODOS_DESCRIPTION,
-} from "./tools/read-todos-tool";
 export { TODOS_HINT } from "./hint";
 export {
   createTodosToolkit,

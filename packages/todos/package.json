@@ -1,7 +1,7 @@
 {
   "name": "@eyueldk/aisdk-toolkit-todos",
-  "version": "1.2.1",
-  "description": "Task-list tools (writeTodos, readTodos) for the Vercel AI SDK",
+  "version": "1.3.0",
+  "description": "Task-list tool (writeTodos) for the Vercel AI SDK",
   "license": "MIT",
   "author": "Eyuel G. Molla",
   "sideEffects": false,

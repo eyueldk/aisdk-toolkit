@@ -8,7 +8,6 @@ In-memory task list tools for the [Vercel AI SDK](https://ai-sdk.dev).
 ## Features
 
 - **`writeTodos`** — replace the full todo list on each call
-- **`readTodos`** — Markdown bullet list (read-only)
 - **`createTodosToolkit({ state })`** → `{ tools, hint, state }`; **`state`** is serializable **`{ todos }`**
 - Status values: `pending`, `in_progress`, `completed`
 
@@ -40,9 +39,15 @@ await generateText({
 console.log(state.todos);
 ```
 
-## Migration (1.2.0)
+## Migration
 
-- **`viewTodos`** → **`readTodos`** (tool name and **`createReadTodosTool`** export).
+### 1.2 → 1.3
+
+- **`readTodos`** removed — read **`state.todos`** after tool calls or use the **`writeTodos`** return value.
+
+### 1.2.0
+
+- **`viewTodos`** → **`readTodos`** (removed in 1.3).
 
 ## License
 
