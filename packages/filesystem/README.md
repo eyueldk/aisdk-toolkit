@@ -120,6 +120,10 @@ Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[
 
 ## Migration
 
+### 1.5.0 → 1.5.1
+
+- **`DockerFileSystem`** with **`root: "/"`** (default) no longer rejects absolute paths such as **`/workspace/...`**.
+
 ### 1.4 → 1.5
 
 - All tools return **structured JSON objects** (with `outputSchema`) instead of plain strings.
@@ -144,7 +148,7 @@ Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[
 
 ## Troubleshooting
 
-- **Docker:** needs a running container and POSIX **`find`** in the image.
+- **Docker:** needs a running container and POSIX **`find`** in the image. Use **`root: "/"`** for full-container access, or **`root: "/workspace"`** (etc.) to scope the adapter to a subdirectory.
 - **Daytona:** sandbox create may succeed while file ops fail if the toolbox proxy is unreachable (self-hosted OSS: resolve **`proxy.localhost`** to loopback).
 
 ## License

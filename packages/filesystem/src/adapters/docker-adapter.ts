@@ -350,6 +350,12 @@ function assertUnderContainerRoot(root: string, target: string): void {
   const normRoot = normalizeContainerRoot(root);
   const normTarget = target.replace(/\/+$/, "") || "/";
   if (normTarget === normRoot) return;
+  if (normRoot === "/") {
+    if (!normTarget.startsWith("/")) {
+      throw dockerPathOutsideRootError(target, normRoot);
+    }
+    return;
+  }
   if (!normTarget.startsWith(`${normRoot}/`)) {
     throw dockerPathOutsideRootError(target, normRoot);
   }

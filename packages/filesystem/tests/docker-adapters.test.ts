@@ -19,7 +19,7 @@ describe.skipIf(!hasDocker)("DockerFileSystem", () => {
   beforeAll(async () => {
     docker = new Dockerode();
     container = await new GenericContainer("alpine")
-      .withCommand(["sh", "-c", "mkdir -p /work && exec sleep infinity"])
+      .withCommand(["sh", "-c", "mkdir -p /work /workspace && exec sleep infinity"])
       .start();
   }, 120_000);
 
@@ -56,5 +56,21 @@ describe.skipIf(!hasDocker)("DockerFileSystem", () => {
         { path: "nested/inner.txt", type: "file" },
       ]),
     );
+  });
+
+  test("reads and writes under / when container root is /", async () => {
+    const adapter = await DockerFileSystem.create({
+      container: container.getId(),
+      root: "/",
+      docker,
+    });
+    await adapter.writeFile("workspace/pnpm-workspace.yaml", "packages:\n", {
+      encoding: "utf8",
+    });
+    expect(
+      await adapter.readFile("/workspace/pnpm-workspace.yaml", {
+        encoding: "utf8",
+      }),
+    ).toBe("packages:\n");
   });
 });
