@@ -20,10 +20,6 @@ const EvaluateOutputSchema = z.object({
     .string()
     .optional()
     .describe("Page snapshot when viewAfter was requested"),
-  error: z
-    .string()
-    .optional()
-    .describe("Execution error message when the script failed"),
 });
 
 export function createEvaluateTool({ browser }: { browser: BrowserInstance }) {
@@ -40,23 +36,15 @@ export function createEvaluateTool({ browser }: { browser: BrowserInstance }) {
       })
       .extend(ActiveTargetSchema.shape),
     outputSchema: EvaluateOutputSchema,
-    execute: async ({ script, viewAfter, contextId, pageId }) => {
-      try {
-        return await browser.withPage(async (page) => {
-          const result = await page.evaluate(script);
-          const output = formatEvaluateResult(result);
-          if (viewAfter) {
-            output.view = await getPageView(page, viewAfter.format);
-          }
-          return output;
-        }, { contextId, pageId });
-      } catch (error) {
-        return {
-          error:
-            error instanceof Error ? error.message : String(error),
-        };
-      }
-    },
+    execute: async ({ script, viewAfter, contextId, pageId }) =>
+      browser.withPage(async (page) => {
+        const result = await page.evaluate(script);
+        const output = formatEvaluateResult(result);
+        if (viewAfter) {
+          output.view = await getPageView(page, viewAfter.format);
+        }
+        return output;
+      }, { contextId, pageId }),
   });
 }
 

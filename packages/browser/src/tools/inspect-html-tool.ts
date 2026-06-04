@@ -17,19 +17,12 @@ export function createInspectHTMLTool({ browser }: { browser: BrowserInstance })
           ),
       })
       .extend(ActiveTargetSchema.shape),
-    execute: async ({ cssSelector, contextId, pageId }) => {
-      try {
-        return await browser.withPage(async (page) => {
-          if (!cssSelector) {
-            return await page.content();
-          }
-          return page.locator(cssSelector).evaluate((el) => el.outerHTML);
-        }, { contextId, pageId });
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return `Error inspecting HTML: ${errorMessage}`;
-      }
-    },
+    execute: async ({ cssSelector, contextId, pageId }) =>
+      browser.withPage(async (page) => {
+        if (!cssSelector) {
+          return await page.content();
+        }
+        return page.locator(cssSelector).evaluate((el) => el.outerHTML);
+      }, { contextId, pageId }),
   });
 }

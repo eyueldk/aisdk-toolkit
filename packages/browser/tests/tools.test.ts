@@ -61,13 +61,16 @@ describe("Browser Tools Integration Tests", () => {
   });
 
   test("inspectHTML tool should return HTML content", async () => {
+    await kit.state.browser.withPage(async (page) => {
+      await page.setContent("<html><body><h1>Title</h1></body></html>");
+    });
+
     const result = await tools.inspectHTML.execute!(
       { cssSelector: "h1" },
       { ...toolOpts, messages: [] },
     );
 
-    expect(typeof result).toBe("string");
-    expect((result as string).length).toBeGreaterThan(0);
+    expect(result).toBe("<h1>Title</h1>");
   });
 
   test("evaluate tool should execute JavaScript", async () => {

@@ -1,6 +1,6 @@
 {
   "name": "@eyueldk/aisdk-toolkit-browser",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Playwright browser toolkit (AI SDK tools) for the Vercel AI SDK",
   "license": "MIT",
   "author": "Eyuel G. Molla",

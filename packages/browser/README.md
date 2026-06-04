@@ -60,9 +60,8 @@ Actions (active page; optional **`pageId`** / **`contextId`** shortcuts): **`got
 | **`value`** | JSON-serializable return value |
 | **`undefined`** | `true` when the script returned no value |
 | **`view`** | Optional page snapshot when **`viewAfter`** was set |
-| **`error`** | Error message when execution failed |
 
-Uses Playwright **`page.evaluate(script)`** directly (no custom `Function` wrapper). Prefer **`inspectHTML`** for DOM markup.
+Uses Playwright **`page.evaluate(script)`** directly (no custom `Function` wrapper). Prefer **`inspectHTML`** for DOM markup. Tool failures throw errors instead of returning error strings in the result.
 
 ## Configuration
 
@@ -82,6 +81,10 @@ await tools.goto.execute({
 ```
 
 ## Migration
+
+### 2.2 → 2.3
+
+- Browser action tools (**`goto`**, **`click`**, **`type`**, **`inspectHTML`**, **`getCookies`**, **`evaluate`**) throw on failure instead of returning error text or **`{ error }`**.
 
 ### 2.1 → 2.2
 

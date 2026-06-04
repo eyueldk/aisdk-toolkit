@@ -13,22 +13,15 @@ export function createGotoTool({ browser }: { browser: BrowserInstance }) {
         viewAfter: ViewAfterSchema,
       })
       .extend(ActiveTargetSchema.shape),
-    execute: async ({ url, viewAfter, contextId, pageId }) => {
-      try {
-        return await browser.withPage(async (page) => {
-          await page.goto(url, { waitUntil: "load" });
-          const base = `Navigated to URL: ${url}`;
-          const output: string[] = [base];
-          if (viewAfter) {
-            output.push(await getPageView(page, viewAfter.format));
-          }
-          return output.join("\n\n");
-        }, { contextId, pageId });
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return `Error navigating to ${url}: ${errorMessage}`;
-      }
-    },
+    execute: async ({ url, viewAfter, contextId, pageId }) =>
+      browser.withPage(async (page) => {
+        await page.goto(url, { waitUntil: "load" });
+        const base = `Navigated to URL: ${url}`;
+        const output: string[] = [base];
+        if (viewAfter) {
+          output.push(await getPageView(page, viewAfter.format));
+        }
+        return output.join("\n\n");
+      }, { contextId, pageId }),
   });
 }

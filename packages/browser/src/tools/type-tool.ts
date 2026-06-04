@@ -17,23 +17,16 @@ export function createTypeTool({ browser }: { browser: BrowserInstance }) {
         viewAfter: ViewAfterSchema,
       })
       .extend(ActiveTargetSchema.shape),
-    execute: async ({ cssSelector, text, viewAfter, contextId, pageId }) => {
-      try {
-        return await browser.withPage(async (page) => {
-          await page.locator(cssSelector).waitFor({ state: "visible" });
-          await page.fill(cssSelector, text);
-          const base = `Typed text into CSS selector: ${cssSelector}`;
-          const output: string[] = [base];
-          if (viewAfter) {
-            output.push(await getPageView(page, viewAfter.format));
-          }
-          return output.join("\n\n");
-        }, { contextId, pageId });
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return `Error typing into ${cssSelector}: ${errorMessage}`;
-      }
-    },
+    execute: async ({ cssSelector, text, viewAfter, contextId, pageId }) =>
+      browser.withPage(async (page) => {
+        await page.locator(cssSelector).waitFor({ state: "visible" });
+        await page.fill(cssSelector, text);
+        const base = `Typed text into CSS selector: ${cssSelector}`;
+        const output: string[] = [base];
+        if (viewAfter) {
+          output.push(await getPageView(page, viewAfter.format));
+        }
+        return output.join("\n\n");
+      }, { contextId, pageId }),
   });
 }

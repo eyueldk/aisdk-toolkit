@@ -7,17 +7,10 @@ export function createGetCookiesTool({ browser }: { browser: BrowserInstance }) 
   return tool({
     description: "Return cookies for the active page's browser context",
     inputSchema: ActiveTargetSchema,
-    execute: async ({ contextId, pageId }) => {
-      try {
-        return await browser.withPage(async (page) => {
-          const cookies = await page.context().cookies();
-          return JSON.stringify(cookies);
-        }, { contextId, pageId });
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return `Error getting cookies: ${errorMessage}`;
-      }
-    },
+    execute: async ({ contextId, pageId }) =>
+      browser.withPage(async (page) => {
+        const cookies = await page.context().cookies();
+        return JSON.stringify(cookies);
+      }, { contextId, pageId }),
   });
 }
