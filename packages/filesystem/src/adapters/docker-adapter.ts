@@ -350,13 +350,8 @@ function assertUnderContainerRoot(root: string, target: string): void {
   const normRoot = normalizeContainerRoot(root);
   const normTarget = target.replace(/\/+$/, "") || "/";
   if (normTarget === normRoot) return;
-  if (normRoot === "/") {
-    if (!normTarget.startsWith("/")) {
-      throw dockerPathOutsideRootError(target, normRoot);
-    }
-    return;
-  }
-  if (!normTarget.startsWith(`${normRoot}/`)) {
+  const prefix = normRoot === "/" ? "/" : `${normRoot}/`;
+  if (!normTarget.startsWith(prefix)) {
     throw dockerPathOutsideRootError(target, normRoot);
   }
 }
@@ -366,12 +361,9 @@ function dockerAdapterChildPath(adapterDir: string, name: string): string {
   return `${adapterDir}/${name}`;
 }
 
-function dockerPathOutsideRootError(
-  adapterPath: string,
-  root: string,
-): Error {
+function dockerPathOutsideRootError(path: string, root: string): Error {
   const err = new Error(
-    `Path is outside container root "${root}": "${adapterPath}"`,
+    `Path is outside container root "${root}": "${path}"`,
   );
   Object.assign(err, { code: "EINVAL" });
   return err;

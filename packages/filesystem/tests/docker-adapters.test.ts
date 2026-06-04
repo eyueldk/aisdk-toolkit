@@ -19,7 +19,7 @@ describe.skipIf(!hasDocker)("DockerFileSystem", () => {
   beforeAll(async () => {
     docker = new Dockerode();
     container = await new GenericContainer("alpine")
-      .withCommand(["sh", "-c", "mkdir -p /work /workspace && exec sleep infinity"])
+      .withCommand(["sh", "-c", "mkdir -p /work && exec sleep infinity"])
       .start();
   }, 120_000);
 
