@@ -94,9 +94,12 @@ Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
 | --- | --- |
 | **`stdout`** | `{ text }` |
 | **`stderr`** | `{ text }` |
-| **`exit`** | `{ exitCode, signal }` — always last |
+| **`exit`** | `{ exitCode, signal }` |
+| **`stdout`** (final) | `{ text }` — full consolidated transcript for the model |
 
-Chunks are mapped to plain text for the model via **`toModelOutput`**: stdout passes through; stderr is prefixed with **`[stderr]`**; exit becomes **`[exit N]`**.
+**Streaming:** preliminary **`stdout`** / **`stderr`** / **`exit`** chunks update live UI. The **last** yielded chunk is a consolidated **`stdout`** transcript (plain stdout, **`[stderr]`**-prefixed stderr, **`[exit N]`** footer) so AI SDK 6 **`executeTool`** sends full output to the model on the next step.
+
+**`toModelOutput`:** passes consolidated final **`stdout`** through unchanged; streamed stderr/exit chunks still map per-chunk for UI.
 
 **Do not** add `2>&1` to commands — stdout and stderr are already captured on separate streams.
 
@@ -112,6 +115,10 @@ Chunks are mapped to plain text for the model via **`toModelOutput`**: stdout pa
 **Daytona:** set **`DAYTONA_API_KEY`** (and **`DAYTONA_API_URL`** for self-hosted). **`stderr`** in results is always empty (API returns combined stdout).
 
 ## Migration
+
+### 1.4.3 → 1.4.4
+
+- **`executeCommand`** yields a final consolidated **`stdout`** chunk after **`exit`** so the model receives full stdout/stderr/exit text (AI SDK streaming tools only use the last yield as the final tool result). Remove downstream wrappers that duplicated this pattern.
 
 ### 1.4.2 → 1.4.3
 

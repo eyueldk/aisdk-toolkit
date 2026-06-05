@@ -5,7 +5,10 @@ import { describe, expect, test } from "vitest";
 import {
   LocalShell,
   SHELL_HINT,
+  ShellAdapter,
   createShellToolkit,
+  type ShellExecOptions,
+  type ShellExecResult,
 } from "../src/index";
 import {
   collectExecuteCommandOutput,
@@ -15,6 +18,29 @@ import {
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 const hangCommand = 'node -e "setTimeout(() => {}, 60_000)"';
+
+class MockStdoutShell extends ShellAdapter {
+  exec(_command: string, options?: ShellExecOptions): Promise<ShellExecResult> {
+    const stdoutText = "hello\n";
+    if (options?.stdout) {
+      options.stdout.write(stdoutText);
+      options.stdout.end();
+      options.stderr?.end();
+      return Promise.resolve({
+        stdout: "",
+        stderr: "",
+        exitCode: 0,
+        signal: null,
+      });
+    }
+    return Promise.resolve({
+      stdout: stdoutText,
+      stderr: "",
+      exitCode: 0,
+      signal: null,
+    });
+  }
+}
 
 describe("createShellToolkit", () => {
   test("returns tools, hint, and state", async () => {
@@ -43,7 +69,33 @@ describe("createShellToolkit", () => {
 
     expect(stdout).toContain("hi");
     expect(exit).toEqual({ kind: "exit", exitCode: 0, signal: null });
-    expect(chunks.at(-1)).toEqual(exit);
+    expect(chunks.at(-2)).toEqual(exit);
+    expect(chunks.at(-1)).toMatchObject({ kind: "stdout" });
+  });
+
+  test("executeCommand ends with consolidated stdout for the model", async () => {
+    const { executeCommand } = createShellToolkit({
+      adapter: new MockStdoutShell(),
+    }).tools;
+    const chunks = await collectExecuteCommandOutput(
+      await executeCommand.execute!(
+        { command: "ignored" },
+        { ...toolOpts, messages: [] },
+      ),
+    );
+
+    const lastChunk = chunks.at(-1);
+    expect(lastChunk).toEqual({
+      kind: "stdout",
+      text: "hello\n\n[exit 0]",
+    });
+    expect(
+      executeCommand.toModelOutput?.({
+        toolCallId: "test",
+        input: { command: "ignored" },
+        output: lastChunk!,
+      }),
+    ).toEqual({ type: "text", value: "hello\n\n[exit 0]" });
   });
 
   test("executeCommand toModelOutput sends stdout as plain text", async () => {
@@ -96,7 +148,7 @@ describe("createShellToolkit", () => {
     );
   });
 
-  test("executeCommand toModelOutput maps both streams from a combined run", async () => {
+  test("executeCommand toModelOutput uses consolidated final stdout chunk", async () => {
     const adapter = await LocalShell.create();
     const { executeCommand } = createShellToolkit({ adapter }).tools;
     const command = localDualStreamCommand();
@@ -107,26 +159,27 @@ describe("createShellToolkit", () => {
       ),
     );
 
-    const modelText = (
-      await Promise.all(
-        chunks.map((output) =>
-          Promise.resolve(
-            executeCommand.toModelOutput?.({
-              toolCallId: "test",
-              input: { command },
-              output,
-            }),
-          ),
-        ),
-      )
-    )
-      .map((part) => (part?.type === "text" ? part.value : ""))
-      .join("");
+    const lastChunk = chunks.at(-1);
+    expect(lastChunk?.kind).toBe("stdout");
 
-    expect(modelText).toContain("stdout-msg");
-    expect(modelText).toContain("[stderr] stderr-msg");
-    expect(modelText).not.toMatch(/\[stderr\].*stdout-msg/);
-    expect(modelText).toMatch(/\[exit 0\]/);
+    const modelText = await Promise.resolve(
+      executeCommand.toModelOutput?.({
+        toolCallId: "test",
+        input: { command },
+        output: lastChunk!,
+      }),
+    );
+
+    expect(modelText).toEqual({
+      type: "text",
+      value: expect.stringContaining("stdout-msg"),
+    });
+    expect(modelText?.type === "text" ? modelText.value : "").toContain(
+      "[stderr] stderr-msg",
+    );
+    expect(modelText?.type === "text" ? modelText.value : "").toMatch(
+      /\[exit 0\]/,
+    );
   });
 
   test("executeCommand rejects when command exceeds timeoutMs", async () => {

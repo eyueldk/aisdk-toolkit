@@ -10,7 +10,7 @@ import {
 import type { CreateShellToolsOptions } from "./index";
 
 const EXECUTE_COMMAND_DESCRIPTION =
-  "Run a shell command. Captures stdout and stderr separately as streamed chunks (do not append shell redirects like 2>&1 — stderr is already returned in its own chunks). Ends with an exit chunk. Pass cwd to set the working directory. Commands always time out (default 120s unless timeoutMs is set).";
+  "Run a shell command. Captures stdout and stderr separately as streamed chunks (do not append shell redirects like 2>&1 — stderr is already returned in its own chunks). Ends with an exit chunk, then a final consolidated stdout chunk for the model. Pass cwd to set the working directory. Commands always time out (default 120s unless timeoutMs is set).";
 
 const MAX_STREAM_CHARS = 32_000;
 
@@ -32,6 +32,13 @@ const ExecuteCommandOutputSchema = z.discriminatedUnion("kind", [
 
 type ExecuteCommandChunk = z.infer<typeof ExecuteCommandOutputSchema>;
 type StreamChunk = { tag: "stdout" | "stderr"; value: string };
+
+type ShellOutputAccumulator = {
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+  signal: string | null;
+};
 
 export function createExecuteCommandTool(options: CreateShellToolsOptions) {
   const defaultTimeoutMs =
@@ -78,6 +85,12 @@ async function* streamExecuteCommand(
   command: string,
   execOptions: { cwd?: string; timeoutMs: number },
 ): AsyncGenerator<ExecuteCommandChunk> {
+  const acc: ShellOutputAccumulator = {
+    stdout: "",
+    stderr: "",
+    exitCode: null,
+    signal: null,
+  };
   const stdout = new AsyncChunkWritable();
   const stderr = new AsyncChunkWritable();
   const pending: StreamChunk[] = [];
@@ -133,7 +146,7 @@ async function* streamExecuteCommand(
         const taken = takeStreamText(chunk.value, stdoutUsed, MAX_STREAM_CHARS);
         stdoutUsed = taken.used;
         if (taken.text) {
-          yield { kind: "stdout", text: taken.text };
+          yield* yieldStdoutChunk(acc, taken.text);
         }
         if (
           stdoutUsed >= MAX_STREAM_CHARS &&
@@ -147,7 +160,7 @@ async function* streamExecuteCommand(
       const taken = takeStreamText(chunk.value, stderrUsed, MAX_STREAM_CHARS);
       stderrUsed = taken.used;
       if (taken.text) {
-        yield { kind: "stderr", text: taken.text };
+        yield* yieldStderrChunk(acc, taken.text);
       }
       if (
         stderrUsed >= MAX_STREAM_CHARS &&
@@ -164,7 +177,7 @@ async function* streamExecuteCommand(
     const taken = takeStreamText(result.stdout, 0, MAX_STREAM_CHARS);
     stdoutUsed = taken.used;
     if (taken.text) {
-      yield { kind: "stdout", text: taken.text };
+      yield* yieldStdoutChunk(acc, taken.text);
     }
     if (result.stdout.length > taken.text.length) {
       stdoutTruncated = true;
@@ -175,7 +188,7 @@ async function* streamExecuteCommand(
     const taken = takeStreamText(result.stderr, 0, MAX_STREAM_CHARS);
     stderrUsed = taken.used;
     if (taken.text) {
-      yield { kind: "stderr", text: taken.text };
+      yield* yieldStderrChunk(acc, taken.text);
     }
     if (result.stderr.length > taken.text.length) {
       stderrTruncated = true;
@@ -183,23 +196,57 @@ async function* streamExecuteCommand(
   }
 
   if (stdoutTruncated) {
-    yield {
-      kind: "stderr",
-      text: `\n[stdout truncated at ${MAX_STREAM_CHARS} characters]`,
-    };
+    yield* yieldStderrChunk(
+      acc,
+      `\n[stdout truncated at ${MAX_STREAM_CHARS} characters]`,
+    );
   }
   if (stderrTruncated) {
-    yield {
-      kind: "stderr",
-      text: `\n[stderr truncated at ${MAX_STREAM_CHARS} characters]`,
-    };
+    yield* yieldStderrChunk(
+      acc,
+      `\n[stderr truncated at ${MAX_STREAM_CHARS} characters]`,
+    );
   }
 
+  acc.exitCode = result.exitCode;
+  acc.signal = result.signal;
   yield {
     kind: "exit",
     exitCode: result.exitCode,
     signal: result.signal,
   };
+  yield {
+    kind: "stdout",
+    text: formatShellOutputForModel(acc),
+  };
+}
+
+function* yieldStdoutChunk(
+  acc: ShellOutputAccumulator,
+  text: string,
+): Generator<ExecuteCommandChunk> {
+  acc.stdout += text;
+  yield { kind: "stdout", text };
+}
+
+function* yieldStderrChunk(
+  acc: ShellOutputAccumulator,
+  text: string,
+): Generator<ExecuteCommandChunk> {
+  acc.stderr += text;
+  yield { kind: "stderr", text };
+}
+
+function formatShellOutputForModel(acc: ShellOutputAccumulator): string {
+  let text = acc.stdout;
+  if (acc.stderr.length > 0) {
+    text += `[stderr] ${acc.stderr}`;
+  }
+  if (acc.exitCode !== null) {
+    const signal = acc.signal ? ` signal=${acc.signal}` : "";
+    text += `\n[exit ${acc.exitCode}${signal}]`;
+  }
+  return text;
 }
 
 async function pumpStreamChunks(

@@ -85,6 +85,17 @@ export async function expectAdapterStreamsStdoutStderr(
   expect(stderrText).not.toContain("stdout-msg");
 }
 
+function streamedChunksOnly(
+  chunks: ExecuteCommandChunk[],
+): ExecuteCommandChunk[] {
+  const last = chunks.at(-1);
+  const beforeLast = chunks.at(-2);
+  if (last?.kind === "stdout" && beforeLast?.kind === "exit") {
+    return chunks.slice(0, -1);
+  }
+  return chunks;
+}
+
 export async function expectExecuteCommandSeparatesStdoutStderr(
   adapter: ShellAdapter,
   command: string,
@@ -93,15 +104,17 @@ export async function expectExecuteCommandSeparatesStdoutStderr(
   const chunks = await collectExecuteCommandOutput(
     await executeCommand.execute!({ command }, { ...toolOpts, messages: [] }),
   );
+  const streamed = streamedChunksOnly(chunks);
 
-  const stdout = joinStreamText(chunks, "stdout");
-  const stderr = joinStreamText(chunks, "stderr");
+  const stdout = joinStreamText(streamed, "stdout");
+  const stderr = joinStreamText(streamed, "stderr");
 
   expect(stdout).toContain("stdout-msg");
   expect(stderr).toContain("stderr-msg");
   expect(stdout).not.toContain("stderr-msg");
   expect(stderr).not.toContain("stdout-msg");
-  expect(chunks.some((chunk) => chunk.kind === "stdout")).toBe(true);
-  expect(chunks.some((chunk) => chunk.kind === "stderr")).toBe(true);
-  expect(chunks.at(-1)).toMatchObject({ kind: "exit", exitCode: 0 });
+  expect(streamed.some((chunk) => chunk.kind === "stdout")).toBe(true);
+  expect(streamed.some((chunk) => chunk.kind === "stderr")).toBe(true);
+  expect(streamed.at(-1)).toMatchObject({ kind: "exit", exitCode: 0 });
+  expect(chunks.at(-1)).toMatchObject({ kind: "stdout" });
 }

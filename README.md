@@ -12,7 +12,7 @@ Monorepo for [**@eyueldk/aisdk-toolkit-***](https://github.com/eyueldk/aisdk-too
 | [@eyueldk/aisdk-toolkit-fetch](packages/fetch) | 1.0.0 | HTTP `fetchRequest` tool |
 | [@eyueldk/aisdk-toolkit-todos](packages/todos) | 1.3.0 | `writeTodos` |
 | [@eyueldk/aisdk-toolkit-filesystem](packages/filesystem) | 1.5.1 | `readFile` / … / structured tool outputs |
-| [@eyueldk/aisdk-toolkit-shell](packages/shell) | 1.4.3 | `executeCommand` separate stdout/stderr |
+| [@eyueldk/aisdk-toolkit-shell](packages/shell) | 1.4.4 | `executeCommand` separate stdout/stderr |
 
 Each package is published independently to npm. Install and usage live in that package’s README.
 
