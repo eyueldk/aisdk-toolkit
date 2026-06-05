@@ -3,6 +3,8 @@ import { createExecuteCommandTool } from "./execute-command-tool";
 
 export type CreateShellToolsOptions = {
   adapter: ShellAdapter;
+  /** Default max runtime for executeCommand when the tool omits timeoutMs. */
+  defaultTimeoutMs?: number;
 };
 
 /**

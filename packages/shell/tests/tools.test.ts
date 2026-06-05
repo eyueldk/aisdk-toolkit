@@ -14,6 +14,7 @@ import {
 } from "./stream-output.helpers";
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
+const hangCommand = 'node -e "setTimeout(() => {}, 60_000)"';
 
 describe("createShellToolkit", () => {
   test("returns tools, hint, and state", async () => {
@@ -126,6 +127,35 @@ describe("createShellToolkit", () => {
     expect(modelText).toContain("[stderr] stderr-msg");
     expect(modelText).not.toMatch(/\[stderr\].*stdout-msg/);
     expect(modelText).toMatch(/\[exit 0\]/);
+  });
+
+  test("executeCommand rejects when command exceeds timeoutMs", async () => {
+    const adapter = await LocalShell.create();
+    const { executeCommand } = createShellToolkit({ adapter }).tools;
+    await expect(
+      collectExecuteCommandOutput(
+        await executeCommand.execute!(
+          { command: hangCommand, timeoutMs: 500 },
+          { ...toolOpts, messages: [] },
+        ),
+      ),
+    ).rejects.toThrow(/timed out after 500ms/i);
+  });
+
+  test("executeCommand uses toolkit defaultTimeoutMs", async () => {
+    const adapter = await LocalShell.create();
+    const { executeCommand } = createShellToolkit({
+      adapter,
+      defaultTimeoutMs: 400,
+    }).tools;
+    await expect(
+      collectExecuteCommandOutput(
+        await executeCommand.execute!(
+          { command: hangCommand },
+          { ...toolOpts, messages: [] },
+        ),
+      ),
+    ).rejects.toThrow(/timed out after 400ms/i);
   });
 
   test("executeCommand cwd selects working directory", async () => {

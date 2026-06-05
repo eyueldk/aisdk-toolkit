@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ShellAdapter } from "../adapter";
+import { DEFAULT_SHELL_TIMEOUT_MS } from "../adapter";
 import {
   AsyncChunkWritable,
   mergeTaggedAsync,
@@ -9,7 +10,7 @@ import {
 import type { CreateShellToolsOptions } from "./index";
 
 const EXECUTE_COMMAND_DESCRIPTION =
-  "Run a shell command. Captures stdout and stderr separately as streamed chunks (do not append shell redirects like 2>&1 — stderr is already returned in its own chunks). Ends with an exit chunk. Pass cwd to set the working directory.";
+  "Run a shell command. Captures stdout and stderr separately as streamed chunks (do not append shell redirects like 2>&1 — stderr is already returned in its own chunks). Ends with an exit chunk. Pass cwd to set the working directory. Commands always time out (default 120s unless timeoutMs is set).";
 
 const MAX_STREAM_CHARS = 32_000;
 
@@ -30,8 +31,12 @@ const ExecuteCommandOutputSchema = z.discriminatedUnion("kind", [
 ]);
 
 type ExecuteCommandChunk = z.infer<typeof ExecuteCommandOutputSchema>;
+type StreamChunk = { tag: "stdout" | "stderr"; value: string };
 
 export function createExecuteCommandTool(options: CreateShellToolsOptions) {
+  const defaultTimeoutMs =
+    options.defaultTimeoutMs ?? DEFAULT_SHELL_TIMEOUT_MS;
+
   return tool({
     description: EXECUTE_COMMAND_DESCRIPTION,
     inputSchema: z.object({
@@ -52,11 +57,16 @@ export function createExecuteCommandTool(options: CreateShellToolsOptions) {
         .int()
         .positive()
         .optional()
-        .describe("Optional timeout in milliseconds"),
+        .describe(
+          `Max runtime in milliseconds (default ${defaultTimeoutMs}). Commands always time out.`,
+        ),
     }),
     outputSchema: ExecuteCommandOutputSchema,
     execute: ({ command, cwd, timeoutMs }) =>
-      streamExecuteCommand(options.adapter, command, { cwd, timeoutMs }),
+      streamExecuteCommand(options.adapter, command, {
+        cwd,
+        timeoutMs: timeoutMs ?? defaultTimeoutMs,
+      }),
     toModelOutput: ({ output }) => formatExecuteCommandChunkForModel(output),
   });
 }
@@ -66,45 +76,85 @@ export { EXECUTE_COMMAND_DESCRIPTION };
 async function* streamExecuteCommand(
   adapter: ShellAdapter,
   command: string,
-  execOptions: { cwd?: string; timeoutMs?: number },
+  execOptions: { cwd?: string; timeoutMs: number },
 ): AsyncGenerator<ExecuteCommandChunk> {
   const stdout = new AsyncChunkWritable();
   const stderr = new AsyncChunkWritable();
-  const execPromise = adapter.exec(command, {
-    cwd: execOptions.cwd,
-    timeoutMs: execOptions.timeoutMs,
-    stdout,
-    stderr,
-  });
+  const pending: StreamChunk[] = [];
+  let pumpDone = false;
+  let pumpError: unknown;
+
+  const execPromise = adapter
+    .exec(command, {
+      cwd: execOptions.cwd,
+      timeoutMs: execOptions.timeoutMs,
+      stdout,
+      stderr,
+    })
+    .catch((error) => {
+      stdout.end();
+      stderr.end();
+      throw error;
+    });
+
+  void pumpStreamChunks(
+    mergeTaggedAsync([
+      { tag: "stdout", iterable: stdout.chunks() },
+      { tag: "stderr", iterable: stderr.chunks() },
+    ]),
+    pending,
+  ).then(
+    () => {
+      pumpDone = true;
+    },
+    (error) => {
+      pumpError = error;
+      pumpDone = true;
+    },
+  );
 
   let stdoutUsed = 0;
   let stderrUsed = 0;
   let stdoutTruncated = false;
   let stderrTruncated = false;
 
-  for await (const { tag, value } of mergeTaggedAsync([
-    { tag: "stdout", iterable: stdout.chunks() },
-    { tag: "stderr", iterable: stderr.chunks() },
-  ])) {
-    if (tag === "stdout") {
-      const taken = takeStreamText(value, stdoutUsed, MAX_STREAM_CHARS);
-      stdoutUsed = taken.used;
-      if (taken.text) {
-        yield { kind: "stdout", text: taken.text };
-      }
-      if (stdoutUsed >= MAX_STREAM_CHARS && value.length > taken.text.length) {
-        stdoutTruncated = true;
-      }
-      continue;
+  while (!pumpDone || pending.length > 0) {
+    if (pending.length === 0) {
+      await Promise.race([waitForStreamData(pending, () => pumpDone), execPromise]);
     }
 
-    const taken = takeStreamText(value, stderrUsed, MAX_STREAM_CHARS);
-    stderrUsed = taken.used;
-    if (taken.text) {
-      yield { kind: "stderr", text: taken.text };
+    if (pumpError) {
+      throw pumpError;
     }
-    if (stderrUsed >= MAX_STREAM_CHARS && value.length > taken.text.length) {
-      stderrTruncated = true;
+
+    while (pending.length > 0) {
+      const chunk = pending.shift()!;
+      if (chunk.tag === "stdout") {
+        const taken = takeStreamText(chunk.value, stdoutUsed, MAX_STREAM_CHARS);
+        stdoutUsed = taken.used;
+        if (taken.text) {
+          yield { kind: "stdout", text: taken.text };
+        }
+        if (
+          stdoutUsed >= MAX_STREAM_CHARS &&
+          chunk.value.length > taken.text.length
+        ) {
+          stdoutTruncated = true;
+        }
+        continue;
+      }
+
+      const taken = takeStreamText(chunk.value, stderrUsed, MAX_STREAM_CHARS);
+      stderrUsed = taken.used;
+      if (taken.text) {
+        yield { kind: "stderr", text: taken.text };
+      }
+      if (
+        stderrUsed >= MAX_STREAM_CHARS &&
+        chunk.value.length > taken.text.length
+      ) {
+        stderrTruncated = true;
+      }
     }
   }
 
@@ -150,6 +200,26 @@ async function* streamExecuteCommand(
     exitCode: result.exitCode,
     signal: result.signal,
   };
+}
+
+async function pumpStreamChunks(
+  stream: AsyncIterable<StreamChunk>,
+  pending: StreamChunk[],
+): Promise<void> {
+  for await (const chunk of stream) {
+    pending.push(chunk);
+  }
+}
+
+async function waitForStreamData(
+  pending: StreamChunk[],
+  isDone: () => boolean,
+): Promise<void> {
+  while (pending.length === 0 && !isDone()) {
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0);
+    });
+  }
 }
 
 function formatExecuteCommandChunkForModel(output: ExecuteCommandChunk): {

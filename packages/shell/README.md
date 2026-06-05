@@ -7,7 +7,7 @@ Pluggable shell command tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap 
 
 ## Features
 
-- **`createShellToolkit({ adapter })`** → `{ tools, hint, state }`
+- **`createShellToolkit({ adapter, defaultTimeoutMs? })`** → `{ tools, hint, state }`
 - Tool: **`executeCommand`** with optional **`cwd`** per call — streams structured stdout/stderr chunks, then an exit chunk (AI SDK async iterable **`execute`**)
 - Adapters: local host, Docker container, SSH, Daytona sandbox
 - **`adapter.exec`**: optional **`stdin`**, streaming **`stdout`** / **`stderr`** (local/SSH)
@@ -74,13 +74,17 @@ try {
 
 ## Configuration
 
+| Option | Default | Description |
+| --- | --- | --- |
+| **`defaultTimeoutMs`** | `120_000` | Max runtime for **`executeCommand`** when the tool omits **`timeoutMs`** |
+
 ### `executeCommand` tool input
 
 | Option | Default | Description |
 | --- | --- | --- |
 | **`command`** | — | Shell command string |
 | **`cwd`** | adapter default | Working directory for this command |
-| **`timeoutMs`** | `120_000` | Max runtime |
+| **`timeoutMs`** | `120_000` (or toolkit **`defaultTimeoutMs`**) | Max runtime; always enforced |
 
 ### `executeCommand` tool output
 
@@ -108,6 +112,10 @@ Chunks are mapped to plain text for the model via **`toModelOutput`**: stdout pa
 **Daytona:** set **`DAYTONA_API_KEY`** (and **`DAYTONA_API_URL`** for self-hosted). **`stderr`** in results is always empty (API returns combined stdout).
 
 ## Migration
+
+### 1.4.2 → 1.4.3
+
+- **`executeCommand`** always applies a timeout (default **`120_000`** ms). Optional toolkit **`defaultTimeoutMs`** on **`createShellTools`** / **`createShellToolkit`**. Stream consumption no longer blocks past adapter timeout.
 
 ### 1.4.1 → 1.4.2
 

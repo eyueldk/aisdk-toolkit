@@ -28,6 +28,7 @@ export function createShellToolkit(
     hint: SHELL_HINT,
     state: {
       adapter: options.adapter,
+      defaultTimeoutMs: options.defaultTimeoutMs,
     },
   };
 }
