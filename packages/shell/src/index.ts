@@ -1,19 +1,6 @@
-export type { ShellExecOptions, ShellExecResult } from "./adapter";
-export { DEFAULT_SHELL_TIMEOUT_MS } from "./adapter";
-export { ShellAdapter } from "./adapter";
-export {
-  DaytonaShell,
-  type DaytonaShellCreateOptions,
-} from "./adapters/daytona-shell";
-export {
-  DockerShell,
-  type DockerShellCreateOptions,
-} from "./adapters/docker-shell";
-export {
-  LocalShell,
-  type LocalShellCreateOptions,
-} from "./adapters/local-shell";
-export { SshShell, type SshShellCreateOptions } from "./adapters/ssh-shell";
+export type { ShellExecOptions, ShellExecResult } from "./adapters";
+export { DEFAULT_SHELL_TIMEOUT_MS } from "./adapters";
+export { ShellAdapter } from "./adapters";
 export { SHELL_HINT } from "./hint";
 export {
   createShellToolkit,

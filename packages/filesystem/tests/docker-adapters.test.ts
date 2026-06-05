@@ -1,7 +1,7 @@
 import Dockerode from "dockerode";
 import { GenericContainer, type StartedTestContainer } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { DockerFileSystem } from "../src/index";
+import { DockerFileSystem } from "../src/adapters/docker";
 
 const hasDocker = await (async () => {
   try {

@@ -1,7 +1,7 @@
 import { Daytona, DaytonaNotFoundError, type Sandbox } from "@daytonaio/sdk";
 import { PassThrough, Writable, type Readable } from "node:stream";
 import { posix } from "node:path";
-import { FileSystemAdapter, type FileStat } from "../adapter";
+import { FileSystemAdapter, type FileStat } from "./index";
 import { resolvePath } from "../path";
 
 export type DaytonaFileSystemCreateOptions = {

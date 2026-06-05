@@ -1,4 +1,4 @@
-import type { FileSystemAdapter } from "./adapter";
+import type { FileSystemAdapter } from "./adapters";
 import { FILE_SYSTEM_HINT } from "./hint";
 import type { FileSystemPermissionRule } from "./permissions";
 import {

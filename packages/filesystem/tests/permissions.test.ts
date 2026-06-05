@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { MemoryFileSystem } from "../src/index";
+import { MemoryFileSystem } from "../src/adapters/memory";
 import {
   collectReadableFilePaths,
   enforcePermissions,

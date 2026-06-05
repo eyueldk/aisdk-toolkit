@@ -6,29 +6,9 @@ export type {
   GrepOptions,
   LsOptions,
   LsStreamOptions,
-} from "./adapter";
+} from "./adapters";
 export type { Readable, Writable } from "node:stream";
-export { FileSystemAdapter } from "./adapter";
-export {
-  DaytonaFileSystem,
-  type DaytonaFileSystemCreateOptions,
-} from "./adapters/daytona-adapter";
-export {
-  DockerFileSystem,
-  type DockerFileSystemCreateOptions,
-} from "./adapters/docker-adapter";
-export {
-  LocalFileSystem,
-  type LocalFileSystemCreateOptions,
-} from "./adapters/local-adapter";
-export {
-  MemoryFileSystem,
-  type MemoryFileSystemCreateOptions,
-} from "./adapters/memory-adapter";
-export {
-  CompositeFileSystem,
-  type CompositeFileSystemCreateOptions,
-} from "./adapters/composite-adapter";
+export { FileSystemAdapter } from "./adapters";
 export { FILE_SYSTEM_HINT } from "./hint";
 export { normalizeGlobPattern, resolvePath } from "./path";
 export {

@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { dirname } from "pathe";
 import { z } from "zod";
-import type { FileSystemAdapter } from "../adapter";
+import type { FileSystemAdapter } from "../adapters";
 import { enforcePermissions } from "../permissions";
 import { resolvePath } from "../path";
 import type { FileSystemToolContext } from "./index";

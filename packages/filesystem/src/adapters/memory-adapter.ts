@@ -1,7 +1,7 @@
 import type { Readable, Writable } from "node:stream";
 import { memfs, type IFs } from "memfs";
 import { dirname } from "pathe";
-import { FileSystemAdapter, type FileStat } from "../adapter";
+import { FileSystemAdapter, type FileStat } from "./index";
 import { resolvePath } from "../path";
 export type MemoryFileSystemCreateOptions = {
   /** Optional path → UTF-8 contents map (POSIX-style keys, relative to `/`). */

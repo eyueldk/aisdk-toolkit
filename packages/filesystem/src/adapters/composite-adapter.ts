@@ -1,5 +1,5 @@
 import type { Readable, Writable } from "node:stream";
-import { FileSystemAdapter, type FileStat, type FileStatType } from "../adapter";
+import { FileSystemAdapter, type FileStat, type FileStatType } from "./index";
 import { resolvePath } from "../path";
 
 export type CompositeFileSystemCreateOptions = {

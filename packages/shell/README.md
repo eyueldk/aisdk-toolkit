@@ -24,7 +24,8 @@ Requires **Node 20+**.
 
 ```ts
 import { generateText, stepCountIs } from "ai";
-import { createShellToolkit, LocalShell } from "@eyueldk/aisdk-toolkit-shell";
+import { createShellToolkit } from "@eyueldk/aisdk-toolkit-shell";
+import { LocalShell } from "@eyueldk/aisdk-toolkit-shell/adapters/local";
 
 const adapter = await LocalShell.create();
 const { tools, hint } = createShellToolkit({ adapter });
@@ -49,6 +50,18 @@ await tools.executeCommand.execute({
 
 ## Adapters
 
+Import adapters from subpaths so bundlers (e.g. SSR) load only the runtime you need:
+
+| Subpath | Adapter |
+| --- | --- |
+| `@eyueldk/aisdk-toolkit-shell/adapters/local` | **LocalShell** |
+| `@eyueldk/aisdk-toolkit-shell/adapters/docker` | **DockerShell** |
+| `@eyueldk/aisdk-toolkit-shell/adapters/ssh` | **SshShell** |
+| `@eyueldk/aisdk-toolkit-shell/adapters/daytona` | **DaytonaShell** |
+| `@eyueldk/aisdk-toolkit-shell/adapters` | **ShellAdapter** types only |
+
+The main entry (`@eyueldk/aisdk-toolkit-shell`) exports the toolkit and **ShellAdapter** — not concrete adapters.
+
 | Adapter | Factory | Notes |
 | --- | --- | --- |
 | **LocalShell** | `await LocalShell.create({ cwd?, env? })` | Host shell; **`stdin`** supported |
@@ -57,7 +70,8 @@ await tools.executeCommand.execute({
 | **DaytonaShell** | `await DaytonaShell.create({ sandbox, cwd?, env? })` | Default **`cwd`**: `workspace`; no **`stdin`** |
 
 ```ts
-import { SshShell } from "@eyueldk/aisdk-toolkit-shell";
+import { createShellToolkit } from "@eyueldk/aisdk-toolkit-shell";
+import { SshShell } from "@eyueldk/aisdk-toolkit-shell/adapters/ssh";
 
 const ssh = await SshShell.create({
   host: "10.0.0.5",
@@ -115,6 +129,18 @@ Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
 **Daytona:** set **`DAYTONA_API_KEY`** (and **`DAYTONA_API_URL`** for self-hosted). **`stderr`** in results is always empty (API returns combined stdout).
 
 ## Migration
+
+### 1.5.1 → 1.5.2
+
+- Adapter subpaths renamed from `/adapter/*` to `/adapters/*` (e.g. `@eyueldk/aisdk-toolkit-shell/adapters/local`).
+
+### 1.5.0 → 1.5.1
+
+- Adapter subpaths grouped under `/adapters/*`.
+
+### 1.4.4 → 1.5.0
+
+- Adapters are no longer exported from the main entry. Import from `/adapters/*` subpaths so SSR/bundlers avoid pulling unused backends (`dockerode`, `ssh2`, `@daytonaio/sdk`).
 
 ### 1.4.3 → 1.4.4
 

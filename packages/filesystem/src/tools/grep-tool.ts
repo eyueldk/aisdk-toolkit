@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import safe from "safe-regex2";
-import { matchGrepLines } from "../adapter";
+import { matchGrepLines } from "../adapters";
 import { collectReadableFilePaths } from "../permissions";
 import { minimatch } from "minimatch";
 import { normalizeGlobPattern, resolvePath } from "../path";

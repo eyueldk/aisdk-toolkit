@@ -1,4 +1,4 @@
-import type { ShellAdapter } from "../adapter";
+import type { ShellAdapter } from "../adapters";
 import { createExecuteCommandTool } from "./execute-command-tool";
 
 export type CreateShellToolsOptions = {

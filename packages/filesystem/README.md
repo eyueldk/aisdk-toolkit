@@ -24,10 +24,8 @@ Requires **Node 20+**.
 
 ```ts
 import { generateText, stepCountIs } from "ai";
-import {
-  createFileSystemToolkit,
-  MemoryFileSystem,
-} from "@eyueldk/aisdk-toolkit-filesystem";
+import { createFileSystemToolkit } from "@eyueldk/aisdk-toolkit-filesystem";
+import { MemoryFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/memory";
 
 const adapter = await MemoryFileSystem.create({
   initialFiles: { "README.md": "# hi" },
@@ -45,6 +43,19 @@ await generateText({
 
 ## Adapters
 
+Import adapters from subpaths so bundlers (e.g. SSR) load only the runtime you need:
+
+| Subpath | Adapter |
+| --- | --- |
+| `@eyueldk/aisdk-toolkit-filesystem/adapters/memory` | **MemoryFileSystem** |
+| `@eyueldk/aisdk-toolkit-filesystem/adapters/local` | **LocalFileSystem** |
+| `@eyueldk/aisdk-toolkit-filesystem/adapters/docker` | **DockerFileSystem** |
+| `@eyueldk/aisdk-toolkit-filesystem/adapters/daytona` | **DaytonaFileSystem** |
+| `@eyueldk/aisdk-toolkit-filesystem/adapters/composite` | **CompositeFileSystem** |
+| `@eyueldk/aisdk-toolkit-filesystem/adapters` | **FileSystemAdapter** types only |
+
+The main entry (`@eyueldk/aisdk-toolkit-filesystem`) exports the toolkit and **FileSystemAdapter** — not concrete adapters.
+
 | Adapter | Factory | Notes |
 | --- | --- | --- |
 | **MemoryFileSystem** | `await MemoryFileSystem.create({ initialFiles? })` | Volatile; tests and sandboxes |
@@ -54,7 +65,7 @@ await generateText({
 | **DaytonaFileSystem** | `await DaytonaFileSystem.create({ sandbox, root? })` or `{ sandboxId?, daytona? }` | Default **`root`**: `workspace` |
 
 ```ts
-import { LocalFileSystem } from "@eyueldk/aisdk-toolkit-filesystem";
+import { LocalFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/local";
 
 const disk = await LocalFileSystem.create({ root: "/path/to/workspace" });
 ```
@@ -62,7 +73,7 @@ const disk = await LocalFileSystem.create({ root: "/path/to/workspace" });
 Daytona (requires **`DAYTONA_API_KEY`**; optional **`DAYTONA_API_URL`** for self-hosted):
 
 ```ts
-import { DaytonaFileSystem } from "@eyueldk/aisdk-toolkit-filesystem";
+import { DaytonaFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/daytona";
 import { Daytona } from "@daytonaio/sdk";
 
 const sandbox = await new Daytona().create();
@@ -76,12 +87,10 @@ Adapter paths are POSIX and normalized with **`resolvePath`**. **`..`** is allow
 Combine adapters under virtual paths (mount keys must not nest):
 
 ```ts
-import {
-  CompositeFileSystem,
-  createFileSystemToolkit,
-  LocalFileSystem,
-  MemoryFileSystem,
-} from "@eyueldk/aisdk-toolkit-filesystem";
+import { createFileSystemToolkit } from "@eyueldk/aisdk-toolkit-filesystem";
+import { CompositeFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/composite";
+import { LocalFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/local";
+import { MemoryFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/memory";
 
 const sandbox = await MemoryFileSystem.create();
 const host = await LocalFileSystem.create({ root: "/project" });
@@ -119,6 +128,18 @@ createFileSystemToolkit({
 Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; no rule → allowed.
 
 ## Migration
+
+### 1.6.1 → 1.6.2
+
+- Adapter subpaths renamed from `/adapter/*` to `/adapters/*` (e.g. `@eyueldk/aisdk-toolkit-filesystem/adapters/local`).
+
+### 1.6.0 → 1.6.1
+
+- Adapter subpaths grouped under `/adapters/*`.
+
+### 1.5.1 → 1.6.0
+
+- Adapters are no longer exported from the main entry. Import from `/adapters/*` subpaths so SSR/bundlers avoid pulling unused backends (`dockerode`, `memfs`, `@daytonaio/sdk`, etc.).
 
 ### 1.5.0 → 1.5.1
 

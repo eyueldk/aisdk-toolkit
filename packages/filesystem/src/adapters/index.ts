@@ -1,7 +1,7 @@
 import type { Readable, Writable } from "node:stream";
 import { buffer } from "node:stream/consumers";
 import { minimatch } from "minimatch";
-import { normalizeGlobPattern, resolvePath } from "./path";
+import { normalizeGlobPattern, resolvePath } from "../path";
 
 export interface GrepOptions {
   pattern: RegExp;

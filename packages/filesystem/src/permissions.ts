@@ -1,5 +1,5 @@
 import { minimatch } from "minimatch";
-import type { FileStat, FileSystemAdapter } from "./adapter";
+import type { FileStat, FileSystemAdapter } from "./adapters";
 import { resolvePath } from "./path";
 
 export type FileSystemPermissionMode = "allow" | "deny";

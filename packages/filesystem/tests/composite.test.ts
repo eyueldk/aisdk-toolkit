@@ -1,9 +1,7 @@
 import { describe, expect, test } from "vitest";
-import {
-  CompositeFileSystem,
-  MemoryFileSystem,
-  createFileSystemTools,
-} from "../src/index";
+import { CompositeFileSystem } from "../src/adapters/composite";
+import { MemoryFileSystem } from "../src/adapters/memory";
+import { createFileSystemTools } from "../src/index";
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 

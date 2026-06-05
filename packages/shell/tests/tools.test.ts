@@ -2,8 +2,8 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
+import { LocalShell } from "../src/adapters/local";
 import {
-  LocalShell,
   SHELL_HINT,
   ShellAdapter,
   createShellToolkit,

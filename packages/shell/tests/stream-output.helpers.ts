@@ -1,7 +1,7 @@
 import { PassThrough } from "node:stream";
 import { buffer } from "node:stream/consumers";
 import { expect } from "vitest";
-import type { ShellAdapter } from "../src/adapter";
+import type { ShellAdapter } from "../src/adapters";
 import { createShellToolkit } from "../src/index";
 
 export const SH_DUAL_STREAM_CMD =

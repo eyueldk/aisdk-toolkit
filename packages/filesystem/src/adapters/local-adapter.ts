@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import type { Readable, Writable } from "node:stream";
 import { basename, dirname, relative, resolve, sep } from "pathe";
-import { FileSystemAdapter, type FileStat } from "../adapter";
+import { FileSystemAdapter, type FileStat } from "./index";
 import { resolvePath } from "../path";
 export type LocalFileSystemCreateOptions = {
   /** Host directory (absolute or relative). Resolved and created if missing. Adapter paths cannot escape it. */

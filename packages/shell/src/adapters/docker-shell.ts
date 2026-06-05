@@ -5,7 +5,7 @@ import {
   ShellAdapter,
   type ShellExecOptions,
   type ShellExecResult,
-} from "../adapter";
+} from "./index";
 import {
   CollectStream,
   mergeEnvLayers,

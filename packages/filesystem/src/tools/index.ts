@@ -1,4 +1,4 @@
-import type { FileSystemAdapter } from "../adapter";
+import type { FileSystemAdapter } from "../adapters";
 import type { FileSystemPermissionRule } from "../permissions";
 import { createEditFileTool } from "./edit-file-tool";
 import { createGlobTool } from "./glob-tool";

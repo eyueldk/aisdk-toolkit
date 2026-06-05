@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   FILE_SYSTEM_HINT,
-  MemoryFileSystem,
   createFileSystemToolkit,
   createFileSystemTools,
   PermissionDeniedError,
 } from "../src/index";
+import { MemoryFileSystem } from "../src/adapters/memory";
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 

@@ -1,18 +1,39 @@
 {
   "name": "@eyueldk/aisdk-toolkit-shell",
-  "version": "1.4.4",
+  "version": "1.5.2",
   "description": "Shell command tools with pluggable adapters (local, Docker, SSH) for the Vercel AI SDK",
   "license": "MIT",
   "author": "Eyuel G. Molla",
   "sideEffects": false,
   "type": "module",
-  "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.mts",
+      "import": "./dist/adapters/index.mjs"
+    },
+    "./adapters/local": {
+      "types": "./dist/adapters/local.d.mts",
+      "import": "./dist/adapters/local.mjs"
+    },
+    "./adapters/docker": {
+      "types": "./dist/adapters/docker.d.mts",
+      "import": "./dist/adapters/docker.mjs"
+    },
+    "./adapters/ssh": {
+      "types": "./dist/adapters/ssh.d.mts",
+      "import": "./dist/adapters/ssh.mjs"
+    },
+    "./adapters/daytona": {
+      "types": "./dist/adapters/daytona.d.mts",
+      "import": "./dist/adapters/daytona.mjs"
+    },
     "./package.json": "./package.json"
   },
-  "module": "./dist/index.mjs",
   "files": [
     "dist",
     "README.md",

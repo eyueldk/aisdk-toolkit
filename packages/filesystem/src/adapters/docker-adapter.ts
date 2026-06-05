@@ -3,7 +3,7 @@ import type { Container } from "dockerode";
 import Dockerode from "dockerode";
 import { posix } from "node:path";
 import { extract, pack } from "tar-stream";
-import { FileSystemAdapter, type FileStat } from "../adapter";
+import { FileSystemAdapter, type FileStat } from "./index";
 import { resolvePath } from "../path";
 export type DockerFileSystemCreateOptions = {
   /** Container ID or name. */

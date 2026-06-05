@@ -1,6 +1,6 @@
 {
   "name": "@eyueldk/aisdk-toolkit-filesystem",
-  "version": "1.5.1",
+  "version": "1.6.2",
   "description": "FileSystem AI SDK tools with pluggable adapters for the Vercel AI SDK",
   "license": "MIT",
   "author": "Eyuel G. Molla",
@@ -9,7 +9,34 @@
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.mts",
+      "import": "./dist/adapters/index.mjs"
+    },
+    "./adapters/memory": {
+      "types": "./dist/adapters/memory.d.mts",
+      "import": "./dist/adapters/memory.mjs"
+    },
+    "./adapters/local": {
+      "types": "./dist/adapters/local.d.mts",
+      "import": "./dist/adapters/local.mjs"
+    },
+    "./adapters/docker": {
+      "types": "./dist/adapters/docker.d.mts",
+      "import": "./dist/adapters/docker.mjs"
+    },
+    "./adapters/daytona": {
+      "types": "./dist/adapters/daytona.d.mts",
+      "import": "./dist/adapters/daytona.mjs"
+    },
+    "./adapters/composite": {
+      "types": "./dist/adapters/composite.d.mts",
+      "import": "./dist/adapters/composite.mjs"
+    },
     "./package.json": "./package.json"
   },
   "module": "./dist/index.mjs",

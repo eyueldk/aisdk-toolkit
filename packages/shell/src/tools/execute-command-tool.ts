@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
-import type { ShellAdapter } from "../adapter";
-import { DEFAULT_SHELL_TIMEOUT_MS } from "../adapter";
+import type { ShellAdapter } from "../adapters";
+import { DEFAULT_SHELL_TIMEOUT_MS } from "../adapters";
 import {
   AsyncChunkWritable,
   mergeTaggedAsync,

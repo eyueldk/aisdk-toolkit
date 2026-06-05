@@ -1,6 +1,6 @@
 import { Daytona } from "@daytonaio/sdk";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { DaytonaFileSystem } from "../src/index";
+import { DaytonaFileSystem } from "../src/adapters/daytona";
 
 const hasDaytonaKey = Boolean(process.env.DAYTONA_API_KEY?.trim());
 
