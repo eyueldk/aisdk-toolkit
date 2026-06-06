@@ -46,6 +46,12 @@ await tools.fetchRequest.execute({
 });
 ```
 
+## Migration
+
+### 1.0 → 2.0
+
+- Toolkit **`hint`** string replaced by **`prompt()`** — call **`prompt()`** in system/instructions. Standalone export: **`fetchPrompt()`** (replaces **`FETCH_HINT`**).
+
 ## Configuration
 
 | Option | Default | Description |

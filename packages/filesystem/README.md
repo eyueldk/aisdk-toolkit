@@ -148,10 +148,10 @@ Call **`prompt()`** on the toolkit (or **`filesystemPrompt({ permissions })`**) 
 
 ## Migration
 
-### Next → (unreleased)
+### 1.6.2 → 2.0
 
-- Toolkit **`hint`** string replaced by **`prompt()`** (returns system text including active configuration). Standalone exports are **`filesystemPrompt`**, etc.
-- Omitted **`permissions`** now defaults to **deny-all**; pass explicit allow rules for file content access.
+- Toolkit **`hint`** string replaced by **`prompt()`** — call **`prompt()`** in system/instructions. Standalone export: **`filesystemPrompt()`** (replaces **`FILE_SYSTEM_HINT`**).
+- Omitted **`permissions`** defaults to **deny-all** for file content (**`read`** / **`write`**). **`list`** and **`glob`** are always available for path discovery.
 
 ### 1.6.1 → 1.6.2
 

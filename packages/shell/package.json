@@ -1,6 +1,6 @@
 {
   "name": "@eyueldk/aisdk-toolkit-shell",
-  "version": "1.5.2",
+  "version": "2.0.0",
   "description": "Shell command tools with pluggable adapters (local, Docker, SSH) for the Vercel AI SDK",
   "license": "MIT",
   "author": "Eyuel G. Molla",

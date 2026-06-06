@@ -41,6 +41,10 @@ console.log(state.todos);
 
 ## Migration
 
+### 1.3 → 2.0
+
+- Toolkit **`hint`** string replaced by **`prompt()`** — call **`prompt()`** in system/instructions. Standalone export: **`todosPrompt()`** (replaces **`TODOS_HINT`**).
+
 ### 1.2 → 1.3
 
 - **`readTodos`** removed — read **`state.todos`** after tool calls or use the **`writeTodos`** return value.

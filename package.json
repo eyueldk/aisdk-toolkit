@@ -25,5 +25,8 @@
       "ssh2"
     ]
   },
-  "packageManager": "pnpm@11.1.0"
+  "packageManager": "pnpm@11.1.0",
+  "devDependencies": {
+    "unrun": "^0.3.0"
+  }
 }

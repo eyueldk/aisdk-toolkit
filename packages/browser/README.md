@@ -82,6 +82,10 @@ await tools.goto.execute({
 
 ## Migration
 
+### 2.3 → 3.0
+
+- Toolkit **`hint`** string replaced by **`prompt()`** — call **`prompt()`** in system/instructions. Standalone export: **`browserPrompt()`** (replaces **`BROWSER_TOOLKIT_HINT`**).
+
 ### 2.2 → 2.3
 
 - Browser action tools (**`goto`**, **`click`**, **`type`**, **`inspectHTML`**, **`getCookies`**, **`evaluate`**) throw on failure instead of returning error text or **`{ error }`**.

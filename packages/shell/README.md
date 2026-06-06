@@ -130,6 +130,10 @@ Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
 
 ## Migration
 
+### 1.5.2 → 2.0
+
+- Toolkit **`hint`** string replaced by **`prompt()`** — call **`prompt()`** in system/instructions. Standalone export: **`shellPrompt()`** (replaces **`SHELL_HINT`**).
+
 ### 1.5.1 → 1.5.2
 
 - Adapter subpaths renamed from `/adapter/*` to `/adapters/*` (e.g. `@eyueldk/aisdk-toolkit-shell/adapters/local`).
