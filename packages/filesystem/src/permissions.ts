@@ -125,22 +125,17 @@ export function filterReadablePaths(
 }
 
 /**
- * Depth-first file paths under `dir`, skipping subtrees denied for `read`.
- * Does not call {@link FileSystemAdapter.readFile}; only {@link FileSystemAdapter.readDir}.
+ * Depth-first file paths under `dir`. Listing is not gated by permissions; only
+ * {@link FileSystemAdapter.readDir} is used.
  */
-export async function collectReadableFilePaths(
+export async function collectAllFilePaths(
   adapter: FileSystemAdapter,
-  rules: FileSystemPermissionRule[] | undefined,
   dir = ".",
 ): Promise<string[]> {
   const files: string[] = [];
   const visit = async (path: string): Promise<void> => {
-    if (!isReadableDir(path, rules)) return;
     const entries = await adapter.readDir(path);
     for (const entry of entries) {
-      if (!isOperationAllowed({ operation: "read", path: entry.path, rules })) {
-        continue;
-      }
       if (entry.type === "file") {
         files.push(entry.path);
       } else {
@@ -153,23 +148,46 @@ export async function collectReadableFilePaths(
 }
 
 /**
- * Lists entries under `dir`, skipping subtrees denied for `read`.
- * When `recursive`, descends only into allowed directories.
+ * File paths under `dir` where **read** (file content) is allowed. Traverses all
+ * directories; omits denied files without throwing. Does not call {@link FileSystemAdapter.readFile}.
+ */
+export async function collectReadableFilePaths(
+  adapter: FileSystemAdapter,
+  rules: FileSystemPermissionRule[] | undefined,
+  dir = ".",
+): Promise<string[]> {
+  const files: string[] = [];
+  const visit = async (path: string): Promise<void> => {
+    const entries = await adapter.readDir(path);
+    for (const entry of entries) {
+      if (entry.type === "file") {
+        if (
+          isOperationAllowed({ operation: "read", path: entry.path, rules })
+        ) {
+          files.push(entry.path);
+        }
+      } else {
+        await visit(entry.path);
+      }
+    }
+  };
+  await visit(dir);
+  return files;
+}
+
+/**
+ * Lists entries under `dir`. Directory listing is not gated by read/write permissions.
+ * When `recursive`, descends into all subdirectories.
  */
 export async function collectVisibleEntries(
   adapter: FileSystemAdapter,
-  rules: FileSystemPermissionRule[] | undefined,
   dir: string,
   recursive: boolean,
 ): Promise<FileStat[]> {
   const out: FileStat[] = [];
   const visit = async (path: string): Promise<void> => {
-    if (!isReadableDir(path, rules)) return;
     const entries = await adapter.readDir(path);
     for (const entry of entries) {
-      if (!isOperationAllowed({ operation: "read", path: entry.path, rules })) {
-        continue;
-      }
       out.push(entry);
       if (recursive && entry.type === "dir") {
         await visit(entry.path);
@@ -178,15 +196,4 @@ export async function collectVisibleEntries(
   };
   await visit(dir);
   return out;
-}
-
-function isReadableDir(
-  dir: string,
-  rules: FileSystemPermissionRule[] | undefined,
-): boolean {
-  return isOperationAllowed({
-    operation: "read",
-    path: resolvePath(dir),
-    rules,
-  });
 }

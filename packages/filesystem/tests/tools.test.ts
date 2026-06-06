@@ -142,7 +142,7 @@ describe("glob tool", () => {
 });
 
 describe("list tool permissions", () => {
-  test("omits denied child paths when listing recursively", async () => {
+  test("lists all paths even when file content read is denied", async () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: {
         "src/public.txt": "ok",
@@ -167,7 +167,18 @@ describe("list tool permissions", () => {
       ),
     );
     expect(out.entries.some((e) => e.path.includes("public.txt"))).toBe(true);
-    expect(out.entries.some((e) => e.path.includes("secret"))).toBe(false);
+    expect(out.entries.some((e) => e.path.includes("secret"))).toBe(true);
+  });
+
+  test("works under default deny-all permissions", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: { "note.txt": "secret" },
+    });
+    const { tools } = createFileSystemToolkit({ adapter });
+    const out = await unwrapToolOutput(
+      await tools.list.execute!({ path: "." }, { ...toolOpts, messages: [] }),
+    );
+    expect(out.entries.some((e) => e.path.includes("note.txt"))).toBe(true);
   });
 });
 

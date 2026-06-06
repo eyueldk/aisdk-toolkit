@@ -1,7 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { collectVisibleEntries, enforcePermissions } from "../permissions";
-import { resolvePath } from "../path";
+import { collectVisibleEntries } from "../permissions";
 import type { FileSystemToolContext } from "./index";
 
 const LIST_DESCRIPTION =
@@ -33,15 +32,8 @@ export function createListTool(options: FileSystemToolContext) {
     }),
     outputSchema: ListOutputSchema,
     execute: async ({ path = ".", recursive = false }) => {
-      const p = resolvePath(path);
-      enforcePermissions({
-        operation: "read",
-        path: p,
-        rules: options.permissions,
-      });
       const entries = await collectVisibleEntries(
         options.adapter,
-        options.permissions,
         path,
         recursive,
       );

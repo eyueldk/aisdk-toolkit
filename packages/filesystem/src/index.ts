@@ -16,6 +16,7 @@ export {
 export { normalizeGlobPattern, resolvePath } from "./path";
 export {
   ALLOW_ALL_FILESYSTEM_PERMISSIONS,
+  collectAllFilePaths,
   collectReadableFilePaths,
   collectVisibleEntries,
   DEFAULT_FILESYSTEM_PERMISSIONS,

@@ -13,7 +13,7 @@ Each tool returns a **structured JSON object** with result-only fields (not a re
 
 - Use **list** or **glob** to discover paths before reading or editing.
 - Use **writeFile** to create new files; pass **\`overwrite: true\`** only when intentionally replacing an existing file. Use **editFile** for targeted changes when you know the exact \`oldText\` to replace — it returns a unified **\`diff\`** of the edit.
-- **Permissions default to deny-all** until allow rules are configured. Respect the active rules: if a path is denied, do not attempt that operation on it.`;
+- **Permissions default to deny-all** for **file content** (**read** / **write**). **list** and **glob** are always available for path discovery; **readFile**, **grep**, **editFile**, and **writeFile** enforce the active rules.`;
 
 function formatPermissionRules(rules: FileSystemPermissionRule[]): string {
   return rules
