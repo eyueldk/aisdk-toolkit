@@ -144,7 +144,7 @@ createFileSystemToolkit({
 
 Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; unmatched paths are allowed when you supply explicit rules. **`read`** / **`write`** apply to **file content** only — **`list`** and **`glob`** are always available for path discovery.
 
-Call **`prompt()`** on the toolkit (or **`filesystemPrompt({ permissions })`**) to include the active rules in the system prompt.
+Call **`prompt()`** on the toolkit (or **`filesystemPrompt({ permissions })`**) — the returned text includes the active rules as JSON so the agent knows which paths are allowed for file content.
 
 ## Migration
 

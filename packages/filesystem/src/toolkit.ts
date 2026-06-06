@@ -34,7 +34,7 @@ export function createFileSystemToolkit(
   const tools = createFileSystemTools({ ...options, permissions });
   return {
     tools,
-    prompt: () => filesystemPrompt({ permissions: options.permissions }),
+    prompt: () => filesystemPrompt({ permissions }),
     state: {
       adapter: options.adapter,
       permissions,

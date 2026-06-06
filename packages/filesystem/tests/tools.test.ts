@@ -269,8 +269,25 @@ describe("createFileSystemToolkit", () => {
     expect(kit.tools.glob).toBeDefined();
     expect(kit.tools.grep).toBeDefined();
     expect(kit.prompt()).toBe(filesystemPrompt());
+    expect(kit.prompt()).toContain('"mode": "deny"');
+    expect(kit.prompt()).toContain('"**"');
     expect(kit.state.adapter).toBe(adapter);
     expect(kit.state.permissions).toEqual(DEFAULT_FILESYSTEM_PERMISSIONS);
+  });
+
+  test("prompt includes configured permissions as JSON", async () => {
+    const adapter = await MemoryFileSystem.create();
+    const kit = createFileSystemToolkit({
+      adapter,
+      permissions: [
+        { mode: "allow", operations: ["read"], paths: ["src/**"] },
+        { mode: "deny", operations: ["write"], paths: ["src/secret/**"] },
+      ],
+    });
+    expect(kit.prompt()).toContain('"mode": "allow"');
+    expect(kit.prompt()).toContain('"src/**"');
+    expect(kit.prompt()).toContain('"src/secret/**"');
+    expect(kit.prompt()).toContain("Configured permissions");
   });
 
   test("denies all operations by default", async () => {
