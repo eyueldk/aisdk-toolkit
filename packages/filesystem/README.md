@@ -41,7 +41,7 @@ await generateText({
   model: yourLanguageModel,
   tools,
   stopWhen: stepCountIs(20),
-  system: `You can use filesystem tools.\n\n${prompt()}`,
+  system: `You can use filesystem tools.\n\n${await prompt()}`,
   prompt: "Read README.md and summarize it in one sentence.",
 });
 ```
@@ -144,13 +144,13 @@ createFileSystemToolkit({
 
 Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; unmatched paths are allowed when you supply explicit rules. **`read`** / **`write`** apply to **file content** only — **`list`** and **`glob`** are always available for path discovery.
 
-Call **`prompt()`** on the toolkit (or **`filesystemPrompt({ permissions })`**) — the returned text includes the active rules as JSON so the agent knows which paths are allowed for file content.
+**`prompt()`** is async — it returns permissions as JSON plus a brief truncated filesystem overview (recursive listing, default depth **2**, max **50** entries). Override with **`overviewMaxDepth`** / **`overviewMaxEntries`** on **`filesystemPrompt({ adapter, permissions, … })`**.
 
 ## Migration
 
 ### 1.6.2 → 2.0
 
-- Toolkit **`hint`** string replaced by **`prompt()`** — call **`prompt()`** in system/instructions. Standalone export: **`filesystemPrompt()`** (replaces **`FILE_SYSTEM_HINT`**).
+- Toolkit **`hint`** string replaced by **`await prompt()`** — async; includes configured permissions (JSON) and a truncated filesystem overview. Standalone export: **`filesystemPrompt()`** (replaces **`FILE_SYSTEM_HINT`**).
 - Omitted **`permissions`** defaults to **deny-all** for file content (**`read`** / **`write`**). **`list`** and **`glob`** are always available for path discovery.
 
 ### 1.6.1 → 1.6.2

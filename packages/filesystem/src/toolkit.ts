@@ -22,7 +22,12 @@ export type FileSystemToolkitState = {
   permissions: FileSystemPermissionRule[];
 };
 
-export type FileSystemToolkit = Toolkit<FileSystemTools, FileSystemToolkitState>;
+export type FileSystemToolkit = Omit<
+  Toolkit<FileSystemTools, FileSystemToolkitState>,
+  "prompt"
+> & {
+  prompt: () => Promise<string>;
+};
 
 /**
  * Primary entry point: AI SDK `tools`, bundled `prompt()`, and `{ adapter, permissions }` on `state`.
@@ -34,7 +39,11 @@ export function createFileSystemToolkit(
   const tools = createFileSystemTools({ ...options, permissions });
   return {
     tools,
-    prompt: () => filesystemPrompt({ permissions }),
+    prompt: () =>
+      filesystemPrompt({
+        permissions,
+        adapter: options.adapter,
+      }),
     state: {
       adapter: options.adapter,
       permissions,

@@ -10,6 +10,8 @@ export type {
 export type { Readable, Writable } from "node:stream";
 export { FileSystemAdapter } from "./adapters";
 export {
+  DEFAULT_PROMPT_OVERVIEW_MAX_DEPTH,
+  DEFAULT_PROMPT_OVERVIEW_MAX_ENTRIES,
   prompt as filesystemPrompt,
   type FileSystemPromptOptions,
 } from "./hint";

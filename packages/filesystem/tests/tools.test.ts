@@ -268,9 +268,14 @@ describe("createFileSystemToolkit", () => {
     expect(kit.tools.list).toBeDefined();
     expect(kit.tools.glob).toBeDefined();
     expect(kit.tools.grep).toBeDefined();
-    expect(kit.prompt()).toBe(filesystemPrompt());
-    expect(kit.prompt()).toContain('"mode": "deny"');
-    expect(kit.prompt()).toContain('"**"');
+    expect(await kit.prompt()).toEqual(
+      await filesystemPrompt({
+        permissions: DEFAULT_FILESYSTEM_PERMISSIONS,
+        adapter,
+      }),
+    );
+    expect(await kit.prompt()).toContain('"mode": "deny"');
+    expect(await kit.prompt()).toContain('"**"');
     expect(kit.state.adapter).toBe(adapter);
     expect(kit.state.permissions).toEqual(DEFAULT_FILESYSTEM_PERMISSIONS);
   });
@@ -284,10 +289,30 @@ describe("createFileSystemToolkit", () => {
         { mode: "deny", operations: ["write"], paths: ["src/secret/**"] },
       ],
     });
-    expect(kit.prompt()).toContain('"mode": "allow"');
-    expect(kit.prompt()).toContain('"src/**"');
-    expect(kit.prompt()).toContain('"src/secret/**"');
-    expect(kit.prompt()).toContain("Configured permissions");
+    expect(await kit.prompt()).toContain('"mode": "allow"');
+    expect(await kit.prompt()).toContain('"src/**"');
+    expect(await kit.prompt()).toContain('"src/secret/**"');
+    expect(await kit.prompt()).toContain("Configured permissions");
+  });
+
+  test("prompt includes truncated filesystem overview", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: {
+        "README.md": "hi",
+        "src/app.ts": "x",
+        "src/lib/util.ts": "y",
+        "a/b/c/d/e.txt": "z",
+      },
+    });
+    const text = await createFileSystemToolkit({
+      adapter,
+      ...allowAll,
+    }).prompt();
+    expect(text).toContain("Filesystem overview");
+    expect(text).toContain("README.md");
+    expect(text).toContain("src/");
+    expect(text).toContain("app.ts");
+    expect(text).not.toContain("e.txt");
   });
 
   test("denies all operations by default", async () => {
