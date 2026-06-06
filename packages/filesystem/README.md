@@ -24,10 +24,7 @@ Requires **Node 20+**.
 
 ```ts
 import { generateText, stepCountIs } from "ai";
-import {
-  ALLOW_ALL_FILESYSTEM_PERMISSIONS,
-  createFileSystemToolkit,
-} from "@eyueldk/aisdk-toolkit-filesystem";
+import { createFileSystemToolkit } from "@eyueldk/aisdk-toolkit-filesystem";
 import { MemoryFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/memory";
 
 const adapter = await MemoryFileSystem.create({
@@ -35,7 +32,9 @@ const adapter = await MemoryFileSystem.create({
 });
 const { tools, prompt } = createFileSystemToolkit({
   adapter,
-  permissions: ALLOW_ALL_FILESYSTEM_PERMISSIONS,
+  permissions: [
+    { mode: "allow", operations: ["read", "write"], paths: ["**"] },
+  ],
 });
 
 await generateText({
@@ -106,7 +105,9 @@ const adapter = CompositeFileSystem.create({
 
 const { tools, prompt } = createFileSystemToolkit({
   adapter,
-  permissions: ALLOW_ALL_FILESYSTEM_PERMISSIONS,
+  permissions: [
+    { mode: "allow", operations: ["read", "write"], paths: ["**"] },
+  ],
 });
 ```
 
@@ -127,7 +128,7 @@ Each tool returns a **structured JSON object** with result-only fields (inputs l
 
 ## Permissions
 
-**Omitted `permissions` defaults to deny-all** (`read` and `write` on `**`). Add allow rules for paths the agent may access. Use **`ALLOW_ALL_FILESYSTEM_PERMISSIONS`** for trusted sandboxes.
+**Omitted `permissions` defaults to deny-all** (`read` and `write` on `**`). Add allow rules for paths the agent may access.
 
 ```ts
 import { createFileSystemToolkit } from "@eyueldk/aisdk-toolkit-filesystem";
@@ -150,7 +151,7 @@ Call **`prompt()`** on the toolkit (or **`filesystemPrompt({ permissions })`**) 
 ### Next → (unreleased)
 
 - Toolkit **`hint`** string replaced by **`prompt()`** (returns system text including active configuration). Standalone exports are **`filesystemPrompt`**, etc.
-- Omitted **`permissions`** now defaults to **deny-all**; use **`ALLOW_ALL_FILESYSTEM_PERMISSIONS`** or explicit allow rules.
+- Omitted **`permissions`** now defaults to **deny-all**; pass explicit allow rules for file content access.
 
 ### 1.6.1 → 1.6.2
 

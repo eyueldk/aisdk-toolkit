@@ -1,10 +1,7 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { ToolLoopAgent, stepCountIs } from "ai";
 import { describe, expect, test } from "vitest";
-import {
-  ALLOW_ALL_FILESYSTEM_PERMISSIONS,
-  createFileSystemToolkit,
-} from "../src/index";
+import { createFileSystemToolkit } from "../src/index";
 import { MemoryFileSystem } from "../src/adapters/memory";
 
 const MAGIC = "INTEGRATION_MAGIC_PHRASE_7f3a";
@@ -22,7 +19,9 @@ describe.skipIf(!openRouterReady)(
       });
       const { tools, prompt } = createFileSystemToolkit({
         adapter,
-        permissions: ALLOW_ALL_FILESYSTEM_PERMISSIONS,
+        permissions: [
+          { mode: "allow", operations: ["read", "write"], paths: ["**"] },
+        ],
       });
       const agent = new ToolLoopAgent({
         model: createOpenRouter()(openRouterModel),

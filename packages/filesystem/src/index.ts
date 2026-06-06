@@ -15,7 +15,6 @@ export {
 } from "./hint";
 export { normalizeGlobPattern, resolvePath } from "./path";
 export {
-  ALLOW_ALL_FILESYSTEM_PERMISSIONS,
   collectAllFilePaths,
   collectReadableFilePaths,
   collectVisibleEntries,

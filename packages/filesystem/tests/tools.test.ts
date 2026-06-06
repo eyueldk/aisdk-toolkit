@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
 import {
-  ALLOW_ALL_FILESYSTEM_PERMISSIONS,
   DEFAULT_FILESYSTEM_PERMISSIONS,
   createFileSystemToolkit,
   createFileSystemTools,
@@ -10,7 +9,11 @@ import {
 import { MemoryFileSystem } from "../src/adapters/memory";
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
-const allowAll = { permissions: ALLOW_ALL_FILESYSTEM_PERMISSIONS };
+const allowAll = {
+  permissions: [
+    { mode: "allow" as const, operations: ["read" as const, "write" as const], paths: ["**"] },
+  ],
+};
 
 async function unwrapToolOutput<T>(output: T | AsyncIterable<T>): Promise<T> {
   if (

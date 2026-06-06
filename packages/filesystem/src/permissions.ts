@@ -26,11 +26,6 @@ export const DEFAULT_FILESYSTEM_PERMISSIONS: FileSystemPermissionRule[] = [
   { mode: "deny", operations: ["read", "write"], paths: ["**"] },
 ];
 
-/** Opt-in allow-all rules (e.g. tests or trusted sandboxes). */
-export const ALLOW_ALL_FILESYSTEM_PERMISSIONS: FileSystemPermissionRule[] = [
-  { mode: "allow", operations: ["read", "write"], paths: ["**"] },
-];
-
 export function resolveFileSystemPermissions(
   permissions?: FileSystemPermissionRule[],
 ): FileSystemPermissionRule[] {
@@ -156,23 +151,7 @@ export async function collectReadableFilePaths(
   rules: FileSystemPermissionRule[] | undefined,
   dir = ".",
 ): Promise<string[]> {
-  const files: string[] = [];
-  const visit = async (path: string): Promise<void> => {
-    const entries = await adapter.readDir(path);
-    for (const entry of entries) {
-      if (entry.type === "file") {
-        if (
-          isOperationAllowed({ operation: "read", path: entry.path, rules })
-        ) {
-          files.push(entry.path);
-        }
-      } else {
-        await visit(entry.path);
-      }
-    }
-  };
-  await visit(dir);
-  return files;
+  return filterReadablePaths(await collectAllFilePaths(adapter, dir), rules);
 }
 
 /**
