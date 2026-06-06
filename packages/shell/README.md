@@ -7,7 +7,7 @@ Pluggable shell command tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap 
 
 ## Features
 
-- **`createShellToolkit({ adapter, defaultTimeoutMs? })`** → `{ tools, hint, state }`
+- **`createShellToolkit({ adapter, defaultTimeoutMs? })`** → `{ tools, prompt, state }`
 - Tool: **`executeCommand`** with optional **`cwd`** per call — streams structured stdout/stderr chunks, then an exit chunk (AI SDK async iterable **`execute`**)
 - Adapters: local host, Docker container, SSH, Daytona sandbox
 - **`adapter.exec`**: optional **`stdin`**, streaming **`stdout`** / **`stderr`** (local/SSH)
@@ -28,13 +28,13 @@ import { createShellToolkit } from "@eyueldk/aisdk-toolkit-shell";
 import { LocalShell } from "@eyueldk/aisdk-toolkit-shell/adapters/local";
 
 const adapter = await LocalShell.create();
-const { tools, hint } = createShellToolkit({ adapter });
+const { tools, prompt } = createShellToolkit({ adapter });
 
 await generateText({
   model: yourLanguageModel,
   tools,
   stopWhen: stepCountIs(15),
-  system: `You can run shell commands.\n\n${hint}`,
+  system: `You can run shell commands.\n\n${prompt()}`,
   prompt: "Run `node -v` in /tmp and report the version.",
 });
 ```
@@ -79,7 +79,7 @@ const ssh = await SshShell.create({
   privateKey: process.env.SSH_PRIVATE_KEY,
 });
 try {
-  const { tools, hint } = createShellToolkit({ adapter: ssh });
+  const { tools, prompt } = createShellToolkit({ adapter: ssh });
   // …
 } finally {
   await ssh.dispose();
@@ -152,7 +152,7 @@ Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
 
 ### 1.4.1 → 1.4.2
 
-- Tool description and hint: **do not** use `2>&1` — stdout and stderr are captured separately.
+- Tool description and **`prompt()`**: **do not** use `2>&1` — stdout and stderr are captured separately.
 - **`toModelOutput`** prefixes stderr with **`[stderr]`** so the model can tell streams apart.
 
 ### 1.4.0 → 1.4.1

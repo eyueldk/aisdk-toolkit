@@ -5,7 +5,7 @@ export {
   type Todo,
   type TodoStatus,
 } from "./tools/write-todos-tool";
-export { TODOS_HINT } from "./hint";
+export { prompt as todosPrompt, type TodosPromptOptions } from "./hint";
 export {
   createTodosToolkit,
   type CreateTodosToolkitOptions,

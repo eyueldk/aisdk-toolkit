@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { LocalShell } from "../src/adapters/local";
 import {
-  SHELL_HINT,
+  shellPrompt,
   ShellAdapter,
   createShellToolkit,
   type ShellExecOptions,
@@ -43,11 +43,11 @@ class MockStdoutShell extends ShellAdapter {
 }
 
 describe("createShellToolkit", () => {
-  test("returns tools, hint, and state", async () => {
+  test("returns tools, prompt, and state", async () => {
     const adapter = await LocalShell.create();
     const kit = createShellToolkit({ adapter });
     expect(kit.tools.executeCommand).toBeDefined();
-    expect(kit.hint).toBe(SHELL_HINT);
+    expect(kit.prompt()).toBe(shellPrompt());
     expect(kit.state.adapter).toBe(adapter);
   });
 

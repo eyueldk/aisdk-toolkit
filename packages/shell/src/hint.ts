@@ -1,5 +1,10 @@
-/** Optional system text when wiring {@link createShellToolkit}. */
-export const SHELL_HINT = `# shell tools
+import { DEFAULT_SHELL_TIMEOUT_MS } from "./adapters";
+
+export type ShellPromptOptions = {
+  defaultTimeoutMs?: number;
+};
+
+const SHELL_PROMPT_BASE = `# shell tools
 
 You can run shell commands with **executeCommand**. Pass **cwd** on each call when the command should run outside the adapter default directory.
 
@@ -10,3 +15,15 @@ You can run shell commands with **executeCommand**. Pass **cwd** on each call wh
 - Piped stdout may be block-buffered; use \`stdbuf -oL\` / \`PYTHONUNBUFFERED=1\` when you need line-by-line output.
 - Avoid destructive commands unless the user explicitly asked for them.
 - Long output may be truncated; re-run with narrower commands if you need more detail.`;
+
+/** System prompt text for agents using the shell toolkit. */
+export function prompt(options?: ShellPromptOptions): string {
+  const defaultTimeoutMs =
+    options?.defaultTimeoutMs ?? DEFAULT_SHELL_TIMEOUT_MS;
+
+  return `${SHELL_PROMPT_BASE}
+
+## Configuration
+
+- **defaultTimeoutMs:** ${defaultTimeoutMs} — max runtime per command unless overridden with **timeoutMs** on a call.`;
+}

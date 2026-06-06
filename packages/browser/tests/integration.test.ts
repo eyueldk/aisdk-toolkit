@@ -14,10 +14,10 @@ describe.skipIf(!openRouterReady)(
     test("agent navigates to example.com via goto", async () => {
       const kit = createBrowserToolkit();
       try {
-        const { tools, hint } = kit;
+        const { tools, prompt } = kit;
         const agent = new ToolLoopAgent({
           model: createOpenRouter()(openRouterModel),
-          instructions: `You control a browser. Use only goto.\n\n${hint}`,
+          instructions: `You control a browser. Use only goto.\n\n${prompt()}`,
           tools,
           activeTools: ["goto"],
           stopWhen: stepCountIs(6),

@@ -1,7 +1,7 @@
 export type { ShellExecOptions, ShellExecResult } from "./adapters";
 export { DEFAULT_SHELL_TIMEOUT_MS } from "./adapters";
 export { ShellAdapter } from "./adapters";
-export { SHELL_HINT } from "./hint";
+export { prompt as shellPrompt, type ShellPromptOptions } from "./hint";
 export {
   createShellToolkit,
   type ShellToolkit,

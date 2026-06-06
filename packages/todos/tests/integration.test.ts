@@ -13,10 +13,10 @@ describe.skipIf(!openRouterReady)(
   () => {
     test("agent writes todos via writeTodos", async () => {
       const state: TodoState = { todos: [] };
-      const { tools, hint } = createTodosToolkit({ state });
+      const { tools, prompt } = createTodosToolkit({ state });
       const agent = new ToolLoopAgent({
         model: createOpenRouter()(openRouterModel),
-        instructions: `You manage a todo list.\n\n${hint}\n\nCall writeTodos once with the full list when creating tasks.`,
+        instructions: `You manage a todo list.\n\n${prompt()}\n\nCall writeTodos once with the full list when creating tasks.`,
         tools,
         stopWhen: stepCountIs(12),
       });

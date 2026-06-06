@@ -1,5 +1,9 @@
-/** System text for agents using the browser toolkit. Append to your base system instructions. */
-export const BROWSER_TOOLKIT_HINT = `## Browser tools
+export type BrowserPromptOptions = {
+  /** Chrome DevTools Protocol endpoint when attaching via `connectOverCDP`. */
+  browserWsEndpoint?: string;
+};
+
+const BROWSER_PROMPT_BASE = `## Browser tools
 
 You control real browser pages via Playwright-backed tools. **Action tools run on the active page** unless you pass optional \`pageId\` / \`contextId\` shortcuts (from \`listContexts\`) to switch before the action. Use \`selectPage\` / \`selectContext\` when you only need to switch.
 
@@ -12,4 +16,17 @@ You control real browser pages via Playwright-backed tools. **Action tools run o
 
 Several tools support \`viewAfter: { format: "simplified" | "accessibility" | "markdown" }\` to append a page view after the action.
 
-Call \`listContexts\` to see context/page UUIDs before \`selectPage\` or \`selectContext\`. Optional \`browserWsEndpoint\` on toolkit creation attaches to an existing Chromium over CDP (\`connectOverCDP\`). The host app should call \`await state.browser.close()\` when the run ends.`;
+Call \`listContexts\` to see context/page UUIDs before \`selectPage\` or \`selectContext\`. The host app should call \`await state.browser.close()\` when the run ends.`;
+
+/** System prompt text for agents using the browser toolkit. */
+export function prompt(options?: BrowserPromptOptions): string {
+  if (!options?.browserWsEndpoint) {
+    return BROWSER_PROMPT_BASE;
+  }
+
+  return `${BROWSER_PROMPT_BASE}
+
+## Configuration
+
+- **browserWsEndpoint:** \`${options.browserWsEndpoint}\` — attach to an existing Chromium over CDP (\`connectOverCDP\`) instead of launching locally.`;
+}

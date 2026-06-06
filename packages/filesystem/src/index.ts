@@ -9,16 +9,22 @@ export type {
 } from "./adapters";
 export type { Readable, Writable } from "node:stream";
 export { FileSystemAdapter } from "./adapters";
-export { FILE_SYSTEM_HINT } from "./hint";
+export {
+  prompt as filesystemPrompt,
+  type FileSystemPromptOptions,
+} from "./hint";
 export { normalizeGlobPattern, resolvePath } from "./path";
 export {
+  ALLOW_ALL_FILESYSTEM_PERMISSIONS,
   collectReadableFilePaths,
   collectVisibleEntries,
+  DEFAULT_FILESYSTEM_PERMISSIONS,
   enforcePermissions,
   evaluatePermission,
   filterReadablePaths,
   isOperationAllowed,
   PermissionDeniedError,
+  resolveFileSystemPermissions,
   type EvaluatePermissionParams,
   type FileSystemPermissionMode,
   type FileSystemPermissionOperation,

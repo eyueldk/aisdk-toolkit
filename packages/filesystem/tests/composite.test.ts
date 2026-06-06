@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { CompositeFileSystem } from "../src/adapters/composite";
 import { MemoryFileSystem } from "../src/adapters/memory";
-import { createFileSystemTools } from "../src/index";
+import {
+  ALLOW_ALL_FILESYSTEM_PERMISSIONS,
+  createFileSystemTools,
+} from "../src/index";
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 
@@ -65,7 +68,10 @@ describe("CompositeFileSystem", () => {
       initialFiles: { "b.txt": "B" },
     });
     const adapter = CompositeFileSystem.create({ mounts: { left, right } });
-    const tools = createFileSystemTools({ adapter });
+    const tools = createFileSystemTools({
+      adapter,
+      permissions: ALLOW_ALL_FILESYSTEM_PERMISSIONS,
+    });
 
     expect(
       await unwrapToolOutput(

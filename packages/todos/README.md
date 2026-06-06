@@ -8,7 +8,7 @@ In-memory task list tools for the [Vercel AI SDK](https://ai-sdk.dev).
 ## Features
 
 - **`writeTodos`** — replace the full todo list on each call
-- **`createTodosToolkit({ state })`** → `{ tools, hint, state }`; **`state`** is serializable **`{ todos }`**
+- **`createTodosToolkit({ state })`** → `{ tools, prompt, state }`; **`state`** is serializable **`{ todos }`**
 - Status values: `pending`, `in_progress`, `completed`
 
 ## Install
@@ -26,13 +26,13 @@ import { generateText, stepCountIs } from "ai";
 import { createTodosToolkit, type TodoState } from "@eyueldk/aisdk-toolkit-todos";
 
 const state: TodoState = { todos: [] };
-const { tools, hint } = createTodosToolkit({ state });
+const { tools, prompt } = createTodosToolkit({ state });
 
 await generateText({
   model: yourLanguageModel,
   tools,
   stopWhen: stepCountIs(20),
-  system: `You are a helpful assistant.\n\n${hint}`,
+  system: `You are a helpful assistant.\n\n${prompt()}`,
   prompt: "Plan three steps to explain why tests matter, using writeTodos.",
 });
 

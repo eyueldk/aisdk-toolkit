@@ -1,13 +1,16 @@
 import { describe, expect, test, vi } from "vitest";
 import {
-  FILE_SYSTEM_HINT,
+  ALLOW_ALL_FILESYSTEM_PERMISSIONS,
+  DEFAULT_FILESYSTEM_PERMISSIONS,
   createFileSystemToolkit,
   createFileSystemTools,
+  filesystemPrompt,
   PermissionDeniedError,
 } from "../src/index";
 import { MemoryFileSystem } from "../src/adapters/memory";
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
+const allowAll = { permissions: ALLOW_ALL_FILESYSTEM_PERMISSIONS };
 
 async function unwrapToolOutput<T>(output: T | AsyncIterable<T>): Promise<T> {
   if (
@@ -26,7 +29,7 @@ async function unwrapToolOutput<T>(output: T | AsyncIterable<T>): Promise<T> {
 describe("readFile / writeFile / editFile / list tools", () => {
   test("round-trip writeFile, list, readFile, editFile", async () => {
     const adapter = await MemoryFileSystem.create();
-    const tools = createFileSystemTools({ adapter });
+    const tools = createFileSystemTools({ adapter, ...allowAll });
 
     const writeResult = await unwrapToolOutput(
       await tools.writeFile.execute!(
@@ -77,7 +80,7 @@ describe("writeFile tool", () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: { "note.txt": "original" },
     });
-    const tools = createFileSystemTools({ adapter });
+    const tools = createFileSystemTools({ adapter, ...allowAll });
 
     await expect(
       tools.writeFile.execute!(
@@ -106,6 +109,7 @@ describe("createFileSystemTools", () => {
       adapter,
       permissions: [
         { mode: "deny", operations: ["write"], paths: ["secret/**"] },
+        { mode: "allow", operations: ["read", "write"], paths: ["**"] },
       ],
     });
 
@@ -126,7 +130,7 @@ describe("glob tool", () => {
         "src/b.js": "y",
       },
     });
-    const tools = createFileSystemTools({ adapter });
+    const tools = createFileSystemTools({ adapter, ...allowAll });
     const out = await unwrapToolOutput(
       await tools.glob.execute!(
         { pattern: "src/**/*.ts" },
@@ -153,6 +157,7 @@ describe("list tool permissions", () => {
           operations: ["read"],
           paths: ["src/secret", "src/secret/**"],
         },
+        { mode: "allow", operations: ["read", "write"], paths: ["**"] },
       ],
     });
     const out = await unwrapToolOutput(
@@ -179,6 +184,7 @@ describe("grep tool", () => {
       adapter,
       permissions: [
         { mode: "deny", operations: ["read"], paths: ["secret/**"] },
+        { mode: "allow", operations: ["read", "write"], paths: ["**"] },
       ],
     });
 
@@ -197,7 +203,7 @@ describe("grep tool", () => {
 
   test("rejects unsafe regex patterns", async () => {
     const adapter = await MemoryFileSystem.create();
-    const tools = createFileSystemTools({ adapter });
+    const tools = createFileSystemTools({ adapter, ...allowAll });
     await expect(
       tools.grep.execute!(
         { pattern: "(a+)+$" },
@@ -210,7 +216,7 @@ describe("grep tool", () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: { "src/a.ts": "const a = 1\nother\n" },
     });
-    const tools = createFileSystemTools({ adapter });
+    const tools = createFileSystemTools({ adapter, ...allowAll });
     const out = await unwrapToolOutput(
       await tools.grep.execute!(
         { pattern: "const", pathGlob: "src/**/*.ts" },
@@ -231,7 +237,7 @@ describe("createFileSystemToolkit", () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: { "a.txt": "A" },
     });
-    const { tools } = createFileSystemToolkit({ adapter });
+    const { tools } = createFileSystemToolkit({ adapter, ...allowAll });
     expect(
       await unwrapToolOutput(
         await tools.readFile.execute!({ path: "a.txt" }, { ...toolOpts, messages: [] }),
@@ -239,7 +245,7 @@ describe("createFileSystemToolkit", () => {
     ).toEqual({ content: "A" });
   });
 
-  test("returns tools, hint, and state", async () => {
+  test("returns tools, prompt, and state", async () => {
     const adapter = await MemoryFileSystem.create();
     const kit = createFileSystemToolkit({ adapter });
     expect(kit.tools.readFile).toBeDefined();
@@ -248,8 +254,18 @@ describe("createFileSystemToolkit", () => {
     expect(kit.tools.list).toBeDefined();
     expect(kit.tools.glob).toBeDefined();
     expect(kit.tools.grep).toBeDefined();
-    expect(kit.hint).toBe(FILE_SYSTEM_HINT);
+    expect(kit.prompt()).toBe(filesystemPrompt());
     expect(kit.state.adapter).toBe(adapter);
-    expect(kit.state.permissions).toBeUndefined();
+    expect(kit.state.permissions).toEqual(DEFAULT_FILESYSTEM_PERMISSIONS);
+  });
+
+  test("denies all operations by default", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: { "a.txt": "A" },
+    });
+    const { tools } = createFileSystemToolkit({ adapter });
+    await expect(
+      tools.readFile.execute!({ path: "a.txt" }, { ...toolOpts, messages: [] }),
+    ).rejects.toThrow(PermissionDeniedError);
   });
 });

@@ -12,10 +12,10 @@ describe.skipIf(!openRouterReady)(
   "fetch toolkit + ToolLoopAgent (OpenRouter)",
   () => {
     test("agent fetches a public page via fetchRequest", async () => {
-      const { tools, hint } = createFetchToolkit();
+      const { tools, prompt } = createFetchToolkit();
       const agent = new ToolLoopAgent({
         model: createOpenRouter()(openRouterModel),
-        instructions: `You can fetch web pages.\n\n${hint}\n\nUse fetchRequest once with GET on the URL the user gives you.`,
+        instructions: `You can fetch web pages.\n\n${prompt()}\n\nUse fetchRequest once with GET on the URL the user gives you.`,
         tools,
         stopWhen: stepCountIs(8),
       });

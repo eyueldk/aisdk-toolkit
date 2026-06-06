@@ -7,7 +7,7 @@ HTTP fetch tools for the [Vercel AI SDK](https://ai-sdk.dev). Uses **`globalThis
 
 ## Features
 
-- **`createFetchToolkit({ fetch?, defaultTimeoutMs? })`** → `{ tools, hint, state }`
+- **`createFetchToolkit({ fetch?, defaultTimeoutMs? })`** → `{ tools, prompt, state }`
 - **`fetchRequest`**: **`path`** (URL) + optional **`query`**, **`method`**, **`headers`**, **`body`**, **`timeoutMs`**
 - **`format`**: `raw` (default) or `markdown` (HTML → Turndown + GFM)
 
@@ -25,13 +25,13 @@ Requires **Node 20+** (built-in `fetch`).
 import { generateText, stepCountIs } from "ai";
 import { createFetchToolkit } from "@eyueldk/aisdk-toolkit-fetch";
 
-const { tools, hint } = createFetchToolkit();
+const { tools, prompt } = createFetchToolkit();
 
 await generateText({
   model: yourLanguageModel,
   tools,
   stopWhen: stepCountIs(10),
-  system: `You can fetch HTTP resources.\n\n${hint}`,
+  system: `You can fetch HTTP resources.\n\n${prompt()}`,
   prompt:
     "Fetch https://example.com with format markdown and summarize the page.",
 });

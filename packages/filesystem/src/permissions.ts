@@ -13,13 +13,28 @@ export type FileSystemPermissionOperation = "read" | "write";
  * 2. For each `paths` glob in that rule (first → last), the **first** glob that matches the
  *    resolved target path **wins** for that rule: apply `mode` and **stop** (no later rules or
  *    patterns are considered).
- * 3. If no glob matches across all rules, access is **allowed** (use an early catch-all deny rule
- *    to default-deny).
+ * 3. If no glob matches across all rules, access is **allowed** (add explicit allow rules as needed).
  */
 export interface FileSystemPermissionRule {
   mode: FileSystemPermissionMode;
   operations: FileSystemPermissionOperation[];
   paths: string[];
+}
+
+/** Applied when {@link CreateFileSystemToolsOptions.permissions} is omitted. */
+export const DEFAULT_FILESYSTEM_PERMISSIONS: FileSystemPermissionRule[] = [
+  { mode: "deny", operations: ["read", "write"], paths: ["**"] },
+];
+
+/** Opt-in allow-all rules (e.g. tests or trusted sandboxes). */
+export const ALLOW_ALL_FILESYSTEM_PERMISSIONS: FileSystemPermissionRule[] = [
+  { mode: "allow", operations: ["read", "write"], paths: ["**"] },
+];
+
+export function resolveFileSystemPermissions(
+  permissions?: FileSystemPermissionRule[],
+): FileSystemPermissionRule[] {
+  return permissions ?? DEFAULT_FILESYSTEM_PERMISSIONS;
 }
 
 export class PermissionDeniedError extends Error {
@@ -80,7 +95,7 @@ export function isOperationAllowed(params: EvaluatePermissionParams): boolean {
 
 /**
  * Throws {@link PermissionDeniedError} when the first matching rule is `deny`.
- * `rules` omitted or empty → allow all.
+ * Pass resolved rules from {@link resolveFileSystemPermissions}; an empty rule list allows all.
  */
 export function enforcePermissions(params: EvaluatePermissionParams): void {
   const { operation, path: targetPath } = params;

@@ -1,7 +1,10 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { ToolLoopAgent, stepCountIs } from "ai";
 import { describe, expect, test } from "vitest";
-import { createFileSystemToolkit } from "../src/index";
+import {
+  ALLOW_ALL_FILESYSTEM_PERMISSIONS,
+  createFileSystemToolkit,
+} from "../src/index";
 import { MemoryFileSystem } from "../src/adapters/memory";
 
 const MAGIC = "INTEGRATION_MAGIC_PHRASE_7f3a";
@@ -17,10 +20,13 @@ describe.skipIf(!openRouterReady)(
       const adapter = await MemoryFileSystem.create({
         initialFiles: { "note.txt": MAGIC },
       });
-      const { tools, hint } = createFileSystemToolkit({ adapter });
+      const { tools, prompt } = createFileSystemToolkit({
+        adapter,
+        permissions: ALLOW_ALL_FILESYSTEM_PERMISSIONS,
+      });
       const agent = new ToolLoopAgent({
         model: createOpenRouter()(openRouterModel),
-        instructions: `You can read files in a sandbox.\n\n${hint}`,
+        instructions: `You can read files in a sandbox.\n\n${prompt()}`,
         tools,
         stopWhen: stepCountIs(12),
       });
