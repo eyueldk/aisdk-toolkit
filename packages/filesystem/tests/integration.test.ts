@@ -17,10 +17,15 @@ describe.skipIf(!openRouterReady)(
       const adapter = await MemoryFileSystem.create({
         initialFiles: { "note.txt": MAGIC },
       });
-      const { tools, hint } = createFileSystemToolkit({ adapter });
+      const { tools, prompt } = createFileSystemToolkit({
+        adapter,
+        permissions: [
+          { mode: "allow", operations: ["read", "write"], paths: ["**"] },
+        ],
+      });
       const agent = new ToolLoopAgent({
         model: createOpenRouter()(openRouterModel),
-        instructions: `You can read files in a sandbox.\n\n${hint}`,
+        instructions: `You can read files in a sandbox.\n\n${await prompt()}`,
         tools,
         stopWhen: stepCountIs(12),
       });

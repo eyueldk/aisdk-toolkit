@@ -7,7 +7,7 @@ Pluggable filesystem tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap sto
 
 ## Features
 
-- **`createFileSystemToolkit({ adapter, permissions? })`** → `{ tools, hint, state }`
+- **`createFileSystemToolkit({ adapter, permissions? })`** → `{ tools, prompt, state }`
 - Tools: **`readFile`**, **`writeFile`**, **`editFile`**, **`list`**, **`glob`**, **`grep`** — each returns a **structured object** (via AI SDK `outputSchema`)
 - Optional path **permissions** (first matching glob wins)
 - Adapters: memory, local disk, Docker container, Daytona sandbox, **composite** (multiple mounts)
@@ -30,13 +30,18 @@ import { MemoryFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/mem
 const adapter = await MemoryFileSystem.create({
   initialFiles: { "README.md": "# hi" },
 });
-const { tools, hint } = createFileSystemToolkit({ adapter });
+const { tools, prompt } = createFileSystemToolkit({
+  adapter,
+  permissions: [
+    { mode: "allow", operations: ["read", "write"], paths: ["**"] },
+  ],
+});
 
 await generateText({
   model: yourLanguageModel,
   tools,
   stopWhen: stepCountIs(20),
-  system: `You can use filesystem tools.\n\n${hint}`,
+  system: `You can use filesystem tools.\n\n${await prompt()}`,
   prompt: "Read README.md and summarize it in one sentence.",
 });
 ```
@@ -98,7 +103,12 @@ const adapter = CompositeFileSystem.create({
   mounts: { "/sandbox": sandbox, "/host": host },
 });
 
-const { tools, hint } = createFileSystemToolkit({ adapter });
+const { tools, prompt } = createFileSystemToolkit({
+  adapter,
+  permissions: [
+    { mode: "allow", operations: ["read", "write"], paths: ["**"] },
+  ],
+});
 ```
 
 Paths like **`sandbox/src/app.ts`** route to the sandbox adapter; **`host/README.md`** routes to the host adapter. List **`/`** to see mount names.
@@ -118,16 +128,30 @@ Each tool returns a **structured JSON object** with result-only fields (inputs l
 
 ## Permissions
 
+**Omitted `permissions` defaults to deny-all** (`read` and `write` on `**`). Add allow rules for paths the agent may access.
+
 ```ts
+import { createFileSystemToolkit } from "@eyueldk/aisdk-toolkit-filesystem";
+
 createFileSystemToolkit({
   adapter,
-  permissions: [{ mode: "deny", operations: ["write"], paths: ["etc/**"] }],
+  permissions: [
+    { mode: "deny", operations: ["write"], paths: ["etc/**"] },
+    { mode: "allow", operations: ["read", "write"], paths: ["src/**"] },
+  ],
 });
 ```
 
-Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; no rule → allowed.
+Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; unmatched paths are allowed when you supply explicit rules. **`read`** / **`write`** apply to **file content** only — **`list`** and **`glob`** are always available for path discovery.
+
+**`prompt()`** is async — it returns permissions as JSON plus a brief truncated filesystem overview (recursive listing, default depth **2**, max **50** entries). Override with **`overviewMaxDepth`** / **`overviewMaxEntries`** on **`filesystemPrompt({ adapter, permissions, … })`**.
 
 ## Migration
+
+### 1.6.2 → 2.0
+
+- Toolkit **`hint`** string replaced by **`await prompt()`** — async; includes configured permissions (JSON) and a truncated filesystem overview. Standalone export: **`filesystemPrompt()`** (replaces **`FILE_SYSTEM_HINT`**).
+- Omitted **`permissions`** defaults to **deny-all** for file content (**`read`** / **`write`**). **`list`** and **`glob`** are always available for path discovery.
 
 ### 1.6.1 → 1.6.2
 
@@ -165,7 +189,7 @@ Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[
 | API | Description |
 | --- | --- |
 | **`adapter.ls(path, { recursive?, stream? })`** | Default array; **`stream: true`** for large trees |
-| **`createFileSystemTools`** | Tools only (no **`hint`** / **`state`**) |
+| **`createFileSystemTools`** | Tools only (no **`prompt`** / **`state`**) — same default deny-all when **`permissions`** is omitted |
 
 ## Troubleshooting
 

@@ -37,11 +37,7 @@ export function createWriteFileTool(options: FileSystemToolContext) {
         rules: options.permissions,
       });
 
-      const existing = await findExistingPathEntry(
-        options.adapter,
-        p,
-        options.permissions,
-      );
+      const existing = await findExistingPathEntry(options.adapter, p);
       if (existing?.type === "dir") {
         throw new Error(`Refusing to write file: '${p}' is a directory`);
       }
@@ -59,20 +55,11 @@ export function createWriteFileTool(options: FileSystemToolContext) {
 
 export { WRITE_FILE_DESCRIPTION };
 
-async function findExistingPathEntry(
-  adapter: FileSystemAdapter,
-  path: string,
-  permissions: FileSystemToolContext["permissions"],
-) {
+async function findExistingPathEntry(adapter: FileSystemAdapter, path: string) {
   if (path === "/") return undefined;
 
   const parent = dirname(path);
   const parentPath = parent === "." ? "." : resolvePath(parent);
-  enforcePermissions({
-    operation: "read",
-    path: parentPath,
-    rules: permissions,
-  });
 
   try {
     const entries = await adapter.readDir(parentPath);

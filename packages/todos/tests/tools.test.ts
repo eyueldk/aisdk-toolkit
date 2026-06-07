@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   createTodosToolkit,
   createTodoTools,
-  TODOS_HINT,
+  todosPrompt,
   type TodoState,
 } from "../src/index";
 
@@ -56,12 +56,12 @@ describe("writeTodos tool", () => {
 });
 
 describe("createTodosToolkit", () => {
-  test("returns tools, hint, and state", () => {
+  test("returns tools, prompt, and state", () => {
     const state: TodoState = { todos: [] };
     const kit = createTodosToolkit({ state });
     expect(kit.tools.writeTodos).toBeDefined();
     expect("readTodos" in kit.tools).toBe(false);
-    expect(kit.hint).toBe(TODOS_HINT);
+    expect(kit.prompt()).toBe(todosPrompt({ todos: state.todos }));
     expect(kit.state).toBe(state);
   });
 });

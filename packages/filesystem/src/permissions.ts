@@ -13,13 +13,23 @@ export type FileSystemPermissionOperation = "read" | "write";
  * 2. For each `paths` glob in that rule (first → last), the **first** glob that matches the
  *    resolved target path **wins** for that rule: apply `mode` and **stop** (no later rules or
  *    patterns are considered).
- * 3. If no glob matches across all rules, access is **allowed** (use an early catch-all deny rule
- *    to default-deny).
+ * 3. If no glob matches across all rules, access is **allowed** (add explicit allow rules as needed).
  */
 export interface FileSystemPermissionRule {
   mode: FileSystemPermissionMode;
   operations: FileSystemPermissionOperation[];
   paths: string[];
+}
+
+/** Applied when {@link CreateFileSystemToolsOptions.permissions} is omitted. */
+export const DEFAULT_FILESYSTEM_PERMISSIONS: FileSystemPermissionRule[] = [
+  { mode: "deny", operations: ["read", "write"], paths: ["**"] },
+];
+
+export function resolveFileSystemPermissions(
+  permissions?: FileSystemPermissionRule[],
+): FileSystemPermissionRule[] {
+  return permissions ?? DEFAULT_FILESYSTEM_PERMISSIONS;
 }
 
 export class PermissionDeniedError extends Error {
@@ -80,7 +90,7 @@ export function isOperationAllowed(params: EvaluatePermissionParams): boolean {
 
 /**
  * Throws {@link PermissionDeniedError} when the first matching rule is `deny`.
- * `rules` omitted or empty → allow all.
+ * Pass resolved rules from {@link resolveFileSystemPermissions}; an empty rule list allows all.
  */
 export function enforcePermissions(params: EvaluatePermissionParams): void {
   const { operation, path: targetPath } = params;
@@ -110,22 +120,17 @@ export function filterReadablePaths(
 }
 
 /**
- * Depth-first file paths under `dir`, skipping subtrees denied for `read`.
- * Does not call {@link FileSystemAdapter.readFile}; only {@link FileSystemAdapter.readDir}.
+ * Depth-first file paths under `dir`. Listing is not gated by permissions; only
+ * {@link FileSystemAdapter.readDir} is used.
  */
-export async function collectReadableFilePaths(
+export async function collectAllFilePaths(
   adapter: FileSystemAdapter,
-  rules: FileSystemPermissionRule[] | undefined,
   dir = ".",
 ): Promise<string[]> {
   const files: string[] = [];
   const visit = async (path: string): Promise<void> => {
-    if (!isReadableDir(path, rules)) return;
     const entries = await adapter.readDir(path);
     for (const entry of entries) {
-      if (!isOperationAllowed({ operation: "read", path: entry.path, rules })) {
-        continue;
-      }
       if (entry.type === "file") {
         files.push(entry.path);
       } else {
@@ -138,23 +143,30 @@ export async function collectReadableFilePaths(
 }
 
 /**
- * Lists entries under `dir`, skipping subtrees denied for `read`.
- * When `recursive`, descends only into allowed directories.
+ * File paths under `dir` where **read** (file content) is allowed. Traverses all
+ * directories; omits denied files without throwing. Does not call {@link FileSystemAdapter.readFile}.
+ */
+export async function collectReadableFilePaths(
+  adapter: FileSystemAdapter,
+  rules: FileSystemPermissionRule[] | undefined,
+  dir = ".",
+): Promise<string[]> {
+  return filterReadablePaths(await collectAllFilePaths(adapter, dir), rules);
+}
+
+/**
+ * Lists entries under `dir`. Directory listing is not gated by read/write permissions.
+ * When `recursive`, descends into all subdirectories.
  */
 export async function collectVisibleEntries(
   adapter: FileSystemAdapter,
-  rules: FileSystemPermissionRule[] | undefined,
   dir: string,
   recursive: boolean,
 ): Promise<FileStat[]> {
   const out: FileStat[] = [];
   const visit = async (path: string): Promise<void> => {
-    if (!isReadableDir(path, rules)) return;
     const entries = await adapter.readDir(path);
     for (const entry of entries) {
-      if (!isOperationAllowed({ operation: "read", path: entry.path, rules })) {
-        continue;
-      }
       out.push(entry);
       if (recursive && entry.type === "dir") {
         await visit(entry.path);
@@ -163,15 +175,4 @@ export async function collectVisibleEntries(
   };
   await visit(dir);
   return out;
-}
-
-function isReadableDir(
-  dir: string,
-  rules: FileSystemPermissionRule[] | undefined,
-): boolean {
-  return isOperationAllowed({
-    operation: "read",
-    path: resolvePath(dir),
-    rules,
-  });
 }

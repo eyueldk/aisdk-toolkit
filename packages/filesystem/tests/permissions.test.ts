@@ -117,7 +117,7 @@ describe("isOperationAllowed", () => {
 });
 
 describe("collectReadableFilePaths", () => {
-  test("does not readDir denied subtrees", async () => {
+  test("omits files denied for read but still traverses directories", async () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: {
         "ok.txt": "1",
@@ -126,10 +126,10 @@ describe("collectReadableFilePaths", () => {
     });
     const readDir = vi.spyOn(adapter, "readDir");
     const paths = await collectReadableFilePaths(adapter, [
-      { mode: "deny", operations: ["read"], paths: ["secret", "secret/**"] },
+      { mode: "deny", operations: ["read"], paths: ["secret/**"] },
     ]);
     expect(paths).toEqual(["ok.txt"]);
-    expect(readDir.mock.calls.map(([dir]) => dir)).not.toContain("secret");
+    expect(readDir.mock.calls.map(([dir]) => dir)).toContain("secret");
     readDir.mockRestore();
   });
 });

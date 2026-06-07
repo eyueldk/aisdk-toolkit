@@ -26,9 +26,9 @@ describe("Browser Tools Integration Tests", () => {
     await kit.state.browser.close();
   });
 
-  test("createBrowserToolkit returns tools, hint, and state.browser", () => {
+  test("createBrowserToolkit returns tools, prompt, and state.browser", () => {
     expect(kit.tools.goto).toBeDefined();
-    expect(kit.hint).toContain("active page");
+    expect(kit.prompt()).toContain("active page");
     expect(kit.state.browser).toBeDefined();
   });
 

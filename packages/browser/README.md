@@ -7,7 +7,7 @@ Playwright-backed browser tools for the [Vercel AI SDK](https://ai-sdk.dev). Pla
 
 ## Features
 
-- **`createBrowserToolkit({ browserWsEndpoint? })`** → `{ tools, hint, state }` with **`state.browser`** (always created internally; launches Chromium or attaches over **CDP**)
+- **`createBrowserToolkit({ browserWsEndpoint? })`** → `{ tools, prompt, state }` with **`state.browser`** (always created internally; launches Chromium or attaches over **CDP**)
 - **Active page** model: action tools run on the active page; optional **`pageId`** / **`contextId`** on each action tool switch target first, or use **`selectPage`** / **`selectContext`**
 - **`viewPage`** / **`viewAfter`** formats: `simplified`, `accessibility`, `markdown` (Turndown + GFM)
 - Console/network ring buffers; screenshot tool with multimodal output
@@ -26,14 +26,14 @@ Requires **Node 20+**.
 import { generateText, stepCountIs } from "ai";
 import { createBrowserToolkit } from "@eyueldk/aisdk-toolkit-browser";
 
-const { tools, hint, state } = createBrowserToolkit();
+const { tools, prompt, state } = createBrowserToolkit();
 
 try {
   await generateText({
     model: yourLanguageModel,
     tools,
     stopWhen: stepCountIs(10),
-    system: `You control browser pages.\n\n${hint}`,
+    system: `You control browser pages.\n\n${prompt()}`,
     prompt: "Open https://example.com and return the visible h1 text.",
   });
 } finally {
@@ -81,6 +81,10 @@ await tools.goto.execute({
 ```
 
 ## Migration
+
+### 2.3 → 3.0
+
+- Toolkit **`hint`** string replaced by **`prompt()`** — call **`prompt()`** in system/instructions. Standalone export: **`browserPrompt()`** (replaces **`BROWSER_TOOLKIT_HINT`**).
 
 ### 2.2 → 2.3
 

@@ -6,6 +6,7 @@ export {
   type CreateBrowserToolkitOptions,
   type Toolkit,
 } from "./toolkit";
+export { prompt as browserPrompt, type BrowserPromptOptions } from "./hint";
 export {
   BrowserInstance,
   type BrowserInstanceOptions,

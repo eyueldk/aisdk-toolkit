@@ -10,7 +10,7 @@ export {
   performHttpFetch,
 } from "./fetch";
 export { htmlToMarkdown, isHtmlResponseBody } from "./html-to-markdown";
-export { FETCH_HINT } from "./hint";
+export { prompt as fetchPrompt, type FetchPromptOptions } from "./hint";
 export {
   createFetchToolkit,
   type CreateFetchToolkitOptions,

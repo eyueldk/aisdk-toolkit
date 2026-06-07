@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   DEFAULT_FETCH_TIMEOUT_MS,
-  FETCH_HINT,
+  fetchPrompt,
   buildRequestUrl,
   createFetchToolkit,
 } from "../src/index";
@@ -9,10 +9,10 @@ import {
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 
 describe("createFetchToolkit", () => {
-  test("returns tools, hint, and state with native fetch by default", () => {
+  test("returns tools, prompt, and state with native fetch by default", () => {
     const kit = createFetchToolkit();
     expect(kit.tools.fetchRequest).toBeDefined();
-    expect(kit.hint).toBe(FETCH_HINT);
+    expect(kit.prompt()).toBe(fetchPrompt({ defaultTimeoutMs: kit.state.defaultTimeoutMs }));
     expect(kit.state.fetch).toBe(globalThis.fetch);
     expect(kit.state.defaultTimeoutMs).toBe(DEFAULT_FETCH_TIMEOUT_MS);
   });

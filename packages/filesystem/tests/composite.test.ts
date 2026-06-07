@@ -65,7 +65,12 @@ describe("CompositeFileSystem", () => {
       initialFiles: { "b.txt": "B" },
     });
     const adapter = CompositeFileSystem.create({ mounts: { left, right } });
-    const tools = createFileSystemTools({ adapter });
+    const tools = createFileSystemTools({
+      adapter,
+      permissions: [
+        { mode: "allow", operations: ["read", "write"], paths: ["**"] },
+      ],
+    });
 
     expect(
       await unwrapToolOutput(

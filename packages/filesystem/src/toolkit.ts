@@ -1,6 +1,9 @@
 import type { FileSystemAdapter } from "./adapters";
-import { FILE_SYSTEM_HINT } from "./hint";
-import type { FileSystemPermissionRule } from "./permissions";
+import { prompt as filesystemPrompt } from "./hint";
+import {
+  resolveFileSystemPermissions,
+  type FileSystemPermissionRule,
+} from "./permissions";
 import {
   createFileSystemTools,
   type CreateFileSystemToolsOptions,
@@ -8,7 +11,7 @@ import {
 
 export type Toolkit<TTools extends Record<string, unknown>, TState> = {
   tools: TTools;
-  hint: string;
+  prompt: () => string;
   state: TState;
 };
 
@@ -16,24 +19,34 @@ export type FileSystemTools = ReturnType<typeof createFileSystemTools>;
 
 export type FileSystemToolkitState = {
   adapter: FileSystemAdapter;
-  permissions?: FileSystemPermissionRule[];
+  permissions: FileSystemPermissionRule[];
 };
 
-export type FileSystemToolkit = Toolkit<FileSystemTools, FileSystemToolkitState>;
+export type FileSystemToolkit = Omit<
+  Toolkit<FileSystemTools, FileSystemToolkitState>,
+  "prompt"
+> & {
+  prompt: () => Promise<string>;
+};
 
 /**
- * Primary entry point: AI SDK `tools`, bundled `hint`, and `{ adapter, permissions? }` on `state`.
+ * Primary entry point: AI SDK `tools`, bundled `prompt()`, and `{ adapter, permissions }` on `state`.
  */
 export function createFileSystemToolkit(
   options: CreateFileSystemToolsOptions,
 ): FileSystemToolkit {
-  const tools = createFileSystemTools(options);
+  const permissions = resolveFileSystemPermissions(options.permissions);
+  const tools = createFileSystemTools({ ...options, permissions });
   return {
     tools,
-    hint: FILE_SYSTEM_HINT,
+    prompt: () =>
+      filesystemPrompt({
+        permissions,
+        adapter: options.adapter,
+      }),
     state: {
       adapter: options.adapter,
-      permissions: options.permissions,
+      permissions,
     },
   };
 }

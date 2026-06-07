@@ -1,4 +1,4 @@
-import { SHELL_HINT } from "./hint";
+import { prompt as shellPrompt } from "./hint";
 import {
   createShellTools,
   type CreateShellToolsOptions,
@@ -6,7 +6,7 @@ import {
 
 export type Toolkit<TTools extends Record<string, unknown>, TState> = {
   tools: TTools;
-  hint: string;
+  prompt: () => string;
   state: TState;
 };
 
@@ -17,7 +17,7 @@ export type ShellToolkitState = CreateShellToolsOptions;
 export type ShellToolkit = Toolkit<ShellTools, ShellToolkitState>;
 
 /**
- * Primary entry point: AI SDK `tools`, bundled `hint`, and `{ adapter }` on `state`.
+ * Primary entry point: AI SDK `tools`, bundled `prompt()`, and `{ adapter }` on `state`.
  */
 export function createShellToolkit(
   options: CreateShellToolsOptions,
@@ -25,7 +25,7 @@ export function createShellToolkit(
   const tools = createShellTools(options);
   return {
     tools,
-    hint: SHELL_HINT,
+    prompt: () => shellPrompt({ defaultTimeoutMs: options.defaultTimeoutMs }),
     state: {
       adapter: options.adapter,
       defaultTimeoutMs: options.defaultTimeoutMs,

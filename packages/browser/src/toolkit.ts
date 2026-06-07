@@ -1,10 +1,10 @@
 import { BrowserInstance } from "./browser/browser-instance";
-import { BROWSER_TOOLKIT_HINT } from "./hint";
+import { prompt as browserPrompt } from "./hint";
 import { createBrowserTools } from "./tools";
 
 export type Toolkit<TTools extends Record<string, unknown>, TState> = {
   tools: TTools;
-  hint: string;
+  prompt: () => string;
   state: TState;
 };
 
@@ -22,8 +22,8 @@ export type CreateBrowserToolkitOptions = {
 };
 
 /**
- * Primary entry point: AI SDK `tools`, bundled `hint`, and `{ browser }` on `state`.
- * Pass `tools` and `hint` into the AI SDK; call `await state.browser.close()` when finished.
+ * Primary entry point: AI SDK `tools`, bundled `prompt()`, and `{ browser }` on `state`.
+ * Pass `tools` and `prompt()` into the AI SDK; call `await state.browser.close()` when finished.
  */
 export function createBrowserToolkit(
   options?: CreateBrowserToolkitOptions,
@@ -34,7 +34,8 @@ export function createBrowserToolkit(
   const tools = createBrowserTools({ browser });
   return {
     tools,
-    hint: BROWSER_TOOLKIT_HINT,
+    prompt: () =>
+      browserPrompt({ browserWsEndpoint: options?.browserWsEndpoint }),
     state: { browser },
   };
 }

@@ -1,5 +1,8 @@
 import type { FileSystemAdapter } from "../adapters";
-import type { FileSystemPermissionRule } from "../permissions";
+import {
+  resolveFileSystemPermissions,
+  type FileSystemPermissionRule,
+} from "../permissions";
 import { createEditFileTool } from "./edit-file-tool";
 import { createGlobTool } from "./glob-tool";
 import { createGrepTool } from "./grep-tool";
@@ -9,7 +12,7 @@ import { createWriteFileTool } from "./write-file-tool";
 
 export type FileSystemToolContext = {
   adapter: FileSystemAdapter;
-  permissions?: FileSystemPermissionRule[];
+  permissions: FileSystemPermissionRule[];
 };
 
 export type CreateFileSystemToolsOptions = {
@@ -24,7 +27,7 @@ export type CreateFileSystemToolsOptions = {
 export function createFileSystemTools(options: CreateFileSystemToolsOptions) {
   const ctx = {
     adapter: options.adapter,
-    permissions: options.permissions,
+    permissions: resolveFileSystemPermissions(options.permissions),
   };
   return {
     readFile: createReadFileTool(ctx),
