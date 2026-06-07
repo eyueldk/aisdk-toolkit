@@ -1,7 +1,7 @@
 import { PassThrough } from "node:stream";
 import { buffer } from "node:stream/consumers";
 import { beforeAll, describe, expect, test } from "vitest";
-import { LocalShell } from "../src/adapters/local";
+import { LocalShell } from "../src/adapters/local-adapter";
 import {
   expectAdapterSeparatesStdoutStderr,
   expectAdapterStreamsStdoutStderr,

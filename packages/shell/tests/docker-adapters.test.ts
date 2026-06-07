@@ -2,7 +2,7 @@ import type { Container } from "dockerode";
 import Dockerode from "dockerode";
 import { GenericContainer, type StartedTestContainer } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { DockerShell } from "../src/adapters/docker";
+import { DockerShell } from "../src/adapters/docker-adapter";
 import {
   expectAdapterSeparatesStdoutStderr,
   expectAdapterStreamsStdoutStderr,

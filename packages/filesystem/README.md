@@ -57,6 +57,7 @@ Import adapters from subpaths so bundlers (e.g. SSR) load only the runtime you n
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/docker` | **DockerFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/daytona` | **DaytonaFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/composite` | **CompositeFileSystem** |
+| `@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox` | **CloudflareSandboxFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters` | **FileSystemAdapter** types only |
 
 The main entry (`@eyueldk/aisdk-toolkit-filesystem`) exports the toolkit and **FileSystemAdapter** — not concrete adapters.
@@ -68,6 +69,17 @@ The main entry (`@eyueldk/aisdk-toolkit-filesystem`) exports the toolkit and **F
 | **DockerFileSystem** | `await DockerFileSystem.create({ container, root?, docker? })` | Running container; list via **`find`** |
 | **CompositeFileSystem** | `CompositeFileSystem.create({ mounts })` | Virtual union of adapters; mount keys must not overlap/nest |
 | **DaytonaFileSystem** | `await DaytonaFileSystem.create({ sandbox, root? })` or `{ sandboxId?, daytona? }` | Default **`root`**: `workspace` |
+| **CloudflareSandboxFileSystem** | `await CloudflareSandboxFileSystem.create({ sandbox, root? })` | [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) **`ISandbox`**; default **`root`**: `/workspace` |
+
+```ts
+import { getSandbox } from "@cloudflare/sandbox";
+import { createFileSystemToolkit } from "@eyueldk/aisdk-toolkit-filesystem";
+import { CloudflareSandboxFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox";
+
+const sandbox = getSandbox(env.Sandbox, "agent-1");
+const adapter = await CloudflareSandboxFileSystem.create({ sandbox, root: "/workspace" });
+const { tools, hint } = createFileSystemToolkit({ adapter });
+```
 
 ```ts
 import { LocalFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/local";
@@ -146,12 +158,15 @@ Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[
 
 **`prompt()`** is async — it returns permissions as JSON plus a brief truncated filesystem overview (recursive listing, default depth **2**, max **50** entries). Override with **`overviewMaxDepth`** / **`overviewMaxEntries`** on **`filesystemPrompt({ adapter, permissions, … })`**.
 
+**Cloudflare Sandbox:** pass an **`ISandbox`** from `getSandbox(env.Sandbox, id)` in your Worker.
+
 ## Migration
 
 ### 1.6.2 → 2.0
 
 - Toolkit **`hint`** string replaced by **`await prompt()`** — async; includes configured permissions (JSON) and a truncated filesystem overview. Standalone export: **`filesystemPrompt()`** (replaces **`FILE_SYSTEM_HINT`**).
 - Omitted **`permissions`** defaults to **deny-all** for file content (**`read`** / **`write`**). **`list`** and **`glob`** are always available for path discovery.
+- **`CloudflareSandboxFileSystem`** for [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) via `@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox`.
 
 ### 1.6.1 → 1.6.2
 

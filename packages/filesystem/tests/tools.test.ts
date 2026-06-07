@@ -6,7 +6,7 @@ import {
   filesystemPrompt,
   PermissionDeniedError,
 } from "../src/index";
-import { MemoryFileSystem } from "../src/adapters/memory";
+import { MemoryFileSystem } from "../src/adapters/memory-adapter";
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 const allowAll = {

@@ -6,4 +6,6 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   puppeteer: true
+  sharp: true
   ssh2: true
+  workerd: set this to true or false

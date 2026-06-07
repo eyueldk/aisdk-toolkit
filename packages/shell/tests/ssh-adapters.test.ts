@@ -1,7 +1,7 @@
 import Dockerode from "dockerode";
 import { GenericContainer, type StartedTestContainer } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { SshShell } from "../src/adapters/ssh";
+import { SshShell } from "../src/adapters/ssh-adapter";
 import {
   expectAdapterSeparatesStdoutStderr,
   expectAdapterStreamsStdoutStderr,

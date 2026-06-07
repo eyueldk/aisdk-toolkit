@@ -2,7 +2,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { ToolLoopAgent, stepCountIs } from "ai";
 import { describe, expect, test } from "vitest";
 import { createFileSystemToolkit } from "../src/index";
-import { MemoryFileSystem } from "../src/adapters/memory";
+import { MemoryFileSystem } from "../src/adapters/memory-adapter";
 
 const MAGIC = "INTEGRATION_MAGIC_PHRASE_7f3a";
 const openRouterModel = process.env.OPENROUTER_MODEL?.trim() ?? "";

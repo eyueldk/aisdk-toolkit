@@ -37,6 +37,10 @@
       "types": "./dist/adapters/composite.d.mts",
       "import": "./dist/adapters/composite.mjs"
     },
+    "./adapters/cloudflare-sandbox": {
+      "types": "./dist/adapters/cloudflare-sandbox.d.mts",
+      "import": "./dist/adapters/cloudflare-sandbox.mjs"
+    },
     "./package.json": "./package.json"
   },
   "module": "./dist/index.mjs",
@@ -74,6 +78,7 @@
     "agents"
   ],
   "dependencies": {
+    "@cloudflare/sandbox": "0.11.0",
     "@daytonaio/sdk": "0.183.0",
     "ai": "^6.0.180",
     "diff": "^9.0.0",

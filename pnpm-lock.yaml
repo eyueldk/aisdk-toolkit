@@ -94,6 +94,9 @@ importers:
 
   packages/filesystem:
     dependencies:
+      '@cloudflare/sandbox':
+        specifier: 0.11.0
+        version: 0.11.0
       '@daytonaio/sdk':
         specifier: 0.183.0
         version: 0.183.0(ws@8.21.0)
@@ -155,6 +158,9 @@ importers:
 
   packages/shell:
     dependencies:
+      '@cloudflare/sandbox':
+        specifier: 0.11.0
+        version: 0.11.0
       '@daytonaio/sdk':
         specifier: 0.183.0
         version: 0.183.0(ws@8.21.0)
@@ -399,6 +405,23 @@ packages:
 
   '@balena/dockerignore@1.0.2':
     resolution: {integrity: sha512-wMue2Sy4GAVTk6Ic4tJVcnfdau+gx2EnG7S+uAEe+TWJFqE4YoWN4/H8MSLj4eYJKxGg26lZwboEniNiNwZQ6Q==}
+
+  '@cloudflare/containers@0.3.7':
+    resolution: {integrity: sha512-DM9dm3FnIBSyiSJ1FLavKwl/lk3oAmTaynCzZQ9pZR0ncRPquSxkxd8Nu2MFILxmDDsPkxKsSNEh9mHHMty4Fw==}
+
+  '@cloudflare/sandbox@0.11.0':
+    resolution: {integrity: sha512-OdM26ucJlc5B4en8eZMI0C8/UE3gk9bi2sqmElsGyqZIk6nhAo1HqHQynmuLKIHfNo6qo4bt12tWjTgFzzzgBg==}
+    peerDependencies:
+      '@openai/agents': ^0.3.3
+      '@opencode-ai/sdk': ^1.1.40
+      '@xterm/xterm': '>=5.0.0'
+    peerDependenciesMeta:
+      '@openai/agents':
+        optional: true
+      '@opencode-ai/sdk':
+        optional: true
+      '@xterm/xterm':
+        optional: true
 
   '@daytona/api-client@0.183.0':
     resolution: {integrity: sha512-YUZMjxTL2XWpPA0NoaUIDlEDCUvEc8iT+yXTfSkSwjBpCRvwONZ+15p/9sXtIjPWVlSx0ZtUY+xa006maTlywg==}
@@ -1380,6 +1403,9 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
+  aws4fetch@1.0.20:
+    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
+
   axios@1.16.1:
     resolution: {integrity: sha512-caYkukvroVPO8KrzuJEb50Hm07KwfBZPEC3VeFHTsqWHvKTsy54hjJz9BS/cdaypROE2rH6xvm9mHX4fgWkr3A==}
 
@@ -1497,6 +1523,9 @@ packages:
   call-bind-apply-helpers@1.0.2:
     resolution: {integrity: sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==}
     engines: {node: '>= 0.4'}
+
+  capnweb@0.8.0:
+    resolution: {integrity: sha512-BK/TuXUiyfLSKsmjojn70yN7oYG/JJzoURZ3tckjg5Zj2KcygPm0A5jyOlswK7SYB4f0Gh9tt+RZ132b80iLfA==}
 
   chai@6.2.2:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
@@ -1804,6 +1833,10 @@ packages:
   homedir-polyfill@1.0.3:
     resolution: {integrity: sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==}
     engines: {node: '>=0.10.0'}
+
+  hono@4.12.23:
+    resolution: {integrity: sha512-eIaZ9qDgu7XV0pxOCrg7/WhnQ6Ivm22UcxhXx/A3dcbqbbYgBEkc6e/J/s7j2tS96zoB0S9VBdLwQNCWwUo4LA==}
+    engines: {node: '>=16.9.0'}
 
   hookable@6.1.1:
     resolution: {integrity: sha512-U9LYDy1CwhMCnprUfeAZWZGByVbhd54hwepegYTK7Pi5NvqEj63ifz5z+xukznehT7i6NIZRu89Ay1AZmRsLEQ==}
@@ -2903,6 +2936,15 @@ snapshots:
 
   '@balena/dockerignore@1.0.2': {}
 
+  '@cloudflare/containers@0.3.7': {}
+
+  '@cloudflare/sandbox@0.11.0':
+    dependencies:
+      '@cloudflare/containers': 0.3.7
+      aws4fetch: 1.0.20
+      capnweb: 0.8.0
+      hono: 4.12.23
+
   '@daytona/api-client@0.183.0':
     dependencies:
       axios: 1.16.1
@@ -3868,6 +3910,8 @@ snapshots:
 
   asynckit@0.4.0: {}
 
+  aws4fetch@1.0.20: {}
+
   axios@1.16.1:
     dependencies:
       follow-redirects: 1.16.0
@@ -3981,6 +4025,8 @@ snapshots:
     dependencies:
       es-errors: 1.3.0
       function-bind: 1.1.2
+
+  capnweb@0.8.0: {}
 
   chai@6.2.2: {}
 
@@ -4298,6 +4344,8 @@ snapshots:
   homedir-polyfill@1.0.3:
     dependencies:
       parse-passwd: 1.0.0
+
+  hono@4.12.23: {}
 
   hookable@6.1.1: {}
 

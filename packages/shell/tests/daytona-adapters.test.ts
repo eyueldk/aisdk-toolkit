@@ -1,6 +1,6 @@
 import { Daytona } from "@daytonaio/sdk";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { DaytonaShell } from "../src/adapters/daytona";
+import { DaytonaShell } from "../src/adapters/daytona-adapter";
 import { SH_DUAL_STREAM_CMD } from "./stream-output.helpers";
 
 const hasDaytonaKey = Boolean(process.env.DAYTONA_API_KEY?.trim());

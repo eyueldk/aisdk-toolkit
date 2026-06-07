@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "pathe";
 import { describe, expect, test } from "vitest";
-import { LocalFileSystem } from "../src/adapters/local";
-import { MemoryFileSystem } from "../src/adapters/memory";
+import { LocalFileSystem } from "../src/adapters/local-adapter";
+import { MemoryFileSystem } from "../src/adapters/memory-adapter";
 
 describe("LocalFileSystem", () => {
   test("reads and writes under root", async () => {
