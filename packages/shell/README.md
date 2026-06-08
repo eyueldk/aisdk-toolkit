@@ -9,7 +9,7 @@ Pluggable shell command tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap 
 
 - **`createShellToolkit({ adapter, defaultTimeoutMs? })`** → `{ tools, prompt, state }`
 - Tool: **`executeCommand`** with optional **`cwd`** per call — streams structured stdout/stderr chunks, then an exit chunk (AI SDK async iterable **`execute`**)
-- Adapters: local host, Docker container, SSH, Daytona sandbox
+- Adapters: local host, Docker container, SSH, Daytona sandbox, Cloudflare Sandbox
 - **`adapter.exec`**: optional **`stdin`**, streaming **`stdout`** / **`stderr`** (local/SSH)
 
 ## Install
@@ -78,7 +78,7 @@ import { CloudflareSandboxShell } from "@eyueldk/aisdk-toolkit-shell/adapters/cl
 
 const sandbox = getSandbox(env.Sandbox, "agent-1");
 const adapter = await CloudflareSandboxShell.create({ sandbox, cwd: "/workspace" });
-const { tools, hint } = createShellToolkit({ adapter });
+const { tools, prompt } = createShellToolkit({ adapter });
 ```
 
 ```ts
@@ -144,10 +144,13 @@ Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
 
 ## Migration
 
+### 2.0 → 2.1
+
+- **`CloudflareSandboxShell`** for [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) via `@eyueldk/aisdk-toolkit-shell/adapters/cloudflare-sandbox`.
+
 ### 1.5.2 → 2.0
 
 - Toolkit **`hint`** string replaced by **`prompt()`** — call **`prompt()`** in system/instructions. Standalone export: **`shellPrompt()`** (replaces **`SHELL_HINT`**).
-- **`CloudflareSandboxShell`** for [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) via `@eyueldk/aisdk-toolkit-shell/adapters/cloudflare-sandbox`.
 
 ### 1.5.1 → 1.5.2
 

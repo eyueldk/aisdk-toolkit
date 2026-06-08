@@ -10,7 +10,7 @@ Pluggable filesystem tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap sto
 - **`createFileSystemToolkit({ adapter, permissions? })`** → `{ tools, prompt, state }`
 - Tools: **`readFile`**, **`writeFile`**, **`editFile`**, **`list`**, **`glob`**, **`grep`** — each returns a **structured object** (via AI SDK `outputSchema`)
 - Optional path **permissions** (first matching glob wins)
-- Adapters: memory, local disk, Docker container, Daytona sandbox, **composite** (multiple mounts)
+- Adapters: memory, local disk, Docker container, Daytona sandbox, Cloudflare Sandbox, **composite** (multiple mounts)
 
 ## Install
 
@@ -78,7 +78,10 @@ import { CloudflareSandboxFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/a
 
 const sandbox = getSandbox(env.Sandbox, "agent-1");
 const adapter = await CloudflareSandboxFileSystem.create({ sandbox, root: "/workspace" });
-const { tools, hint } = createFileSystemToolkit({ adapter });
+const { tools, prompt } = createFileSystemToolkit({
+  adapter,
+  permissions: [{ mode: "allow", operations: ["read", "write"], paths: ["**"] }],
+});
 ```
 
 ```ts
@@ -162,11 +165,14 @@ Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[
 
 ## Migration
 
+### 2.0 → 2.1
+
+- **`CloudflareSandboxFileSystem`** for [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) via `@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox`.
+
 ### 1.6.2 → 2.0
 
 - Toolkit **`hint`** string replaced by **`await prompt()`** — async; includes configured permissions (JSON) and a truncated filesystem overview. Standalone export: **`filesystemPrompt()`** (replaces **`FILE_SYSTEM_HINT`**).
 - Omitted **`permissions`** defaults to **deny-all** for file content (**`read`** / **`write`**). **`list`** and **`glob`** are always available for path discovery.
-- **`CloudflareSandboxFileSystem`** for [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) via `@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox`.
 
 ### 1.6.1 → 1.6.2
 
