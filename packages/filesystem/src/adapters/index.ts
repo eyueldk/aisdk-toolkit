@@ -15,10 +15,10 @@ export interface GrepMatch {
   text: string;
 }
 
-export type FileStatType = "file" | "dir";
+export type FileInfoType = "file" | "dir";
 
-export interface FileStat {
-  type: FileStatType;
+export interface FileInfo {
+  type: FileInfoType;
   path: string;
 }
 
@@ -46,7 +46,7 @@ export abstract class FileSystemAdapter {
   abstract createReadStream(path: string): Readable;
   abstract createWriteStream(path: string): Writable;
   /** Lists immediate children of `path` (not recursive). */
-  abstract readDir(path: string): Promise<FileStat[]>;
+  abstract readDir(path: string): Promise<FileInfo[]>;
 
   readFile(path: string): Promise<Buffer>;
   readFile(path: string, options: { encoding: "utf8" }): Promise<string>;
@@ -93,8 +93,8 @@ export abstract class FileSystemAdapter {
    * Flat listing of all files and directories under `path`. Default: depth-first walk via {@link readDir};
    * override in a subclass for a native recursive listing.
    */
-  async readDirRecursive(path: string): Promise<FileStat[]> {
-    const out: FileStat[] = [];
+  async readDirRecursive(path: string): Promise<FileInfo[]> {
+    const out: FileInfo[] = [];
     for await (const entry of this.readDirRecursiveStream(path)) {
       out.push(entry);
     }
@@ -102,18 +102,18 @@ export abstract class FileSystemAdapter {
   }
 
   /** Yields immediate children of `path`. */
-  async *readDirStream(path: string): AsyncIterable<FileStat> {
+  async *readDirStream(path: string): AsyncIterable<FileInfo> {
     for (const entry of await this.readDir(path)) {
       yield entry;
     }
   }
 
   /** Yields a flat subtree under `path` (depth-first). Override for native streaming listings. */
-  async *readDirRecursiveStream(path: string): AsyncIterable<FileStat> {
+  async *readDirRecursiveStream(path: string): AsyncIterable<FileInfo> {
     const visit = async function* (
       adapter: FileSystemAdapter,
       dir: string,
-    ): AsyncIterable<FileStat> {
+    ): AsyncIterable<FileInfo> {
       for (const entry of await adapter.readDir(dir)) {
         yield entry;
         if (entry.type === "dir") {
@@ -125,12 +125,12 @@ export abstract class FileSystemAdapter {
   }
 
   /** Wrapper over {@link readDir} / {@link readDirRecursive} or their streaming variants. */
-  ls(path: string, options?: LsOptions): Promise<FileStat[]>;
-  ls(path: string, options: LsStreamOptions): AsyncIterable<FileStat>;
+  ls(path: string, options?: LsOptions): Promise<FileInfo[]>;
+  ls(path: string, options: LsStreamOptions): AsyncIterable<FileInfo>;
   ls(
     path: string,
     options: LsOptions | LsStreamOptions = {},
-  ): Promise<FileStat[]> | AsyncIterable<FileStat> {
+  ): Promise<FileInfo[]> | AsyncIterable<FileInfo> {
     if (options.stream) {
       return options.recursive
         ? this.readDirRecursiveStream(path)

@@ -1,5 +1,5 @@
 import type { Readable, Writable } from "node:stream";
-import { FileSystemAdapter, type FileStat, type FileStatType } from "./index";
+import { FileSystemAdapter, type FileInfo, type FileInfoType } from "./index";
 import { resolvePath } from "../path";
 
 export type CompositeFileSystemCreateOptions = {
@@ -55,7 +55,7 @@ export class CompositeFileSystem extends FileSystemAdapter {
     return route.adapter.createWriteStream(route.relativePath);
   }
 
-  async readDir(path: string): Promise<FileStat[]> {
+  async readDir(path: string): Promise<FileInfo[]> {
     const norm = resolvePath(path);
     const route = this.resolveRoute(norm);
     if (route) {
@@ -128,8 +128,8 @@ function assertNonOverlappingMounts(mounts: MountEntry[]): void {
   }
 }
 
-function listVirtualChildren(prefix: string, mounts: MountEntry[]): FileStat[] {
-  const children = new Map<string, FileStatType>();
+function listVirtualChildren(prefix: string, mounts: MountEntry[]): FileInfo[] {
+  const children = new Map<string, FileInfoType>();
   const prefixNorm = prefix === "/" ? "" : prefix;
 
   for (const { mountKey } of mounts) {

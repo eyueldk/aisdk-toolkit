@@ -25,7 +25,7 @@ describe.skipIf(!openRouterReady)(
       });
       const agent = new ToolLoopAgent({
         model: createOpenRouter()(openRouterModel),
-        instructions: `You can read files in a sandbox.\n\n${await prompt()}`,
+        instructions: `You can read files in a sandbox.\n\n${prompt()}`,
         tools,
         stopWhen: stepCountIs(12),
       });

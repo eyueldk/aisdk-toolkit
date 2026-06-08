@@ -173,6 +173,46 @@ describe("list tool permissions", () => {
     expect(out.entries.some((e) => e.path.includes("secret"))).toBe(true);
   });
 
+  test("maxDepth limits recursive listing", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: {
+        "README.md": "hi",
+        "src/app.ts": "x",
+        "src/lib/util.ts": "y",
+        "a/b/c/d/e.txt": "z",
+      },
+    });
+    const tools = createFileSystemTools({ adapter, ...allowAll });
+    const shallow = await unwrapToolOutput(
+      await tools.list.execute!(
+        { path: ".", recursive: true, maxDepth: 2 },
+        { ...toolOpts, messages: [] },
+      ),
+    );
+    expect(shallow.entries.some((e) => e.path === "README.md")).toBe(true);
+    expect(shallow.entries.some((e) => e.path === "src/app.ts")).toBe(true);
+    expect(shallow.entries.some((e) => e.path === "a/b/c/d/e.txt")).toBe(false);
+  });
+
+  test("directoriesOnly returns only directories", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: {
+        "README.md": "hi",
+        "src/app.ts": "x",
+      },
+    });
+    const tools = createFileSystemTools({ adapter, ...allowAll });
+    const out = await unwrapToolOutput(
+      await tools.list.execute!(
+        { path: ".", recursive: true, directoriesOnly: true },
+        { ...toolOpts, messages: [] },
+      ),
+    );
+    expect(out.entries.every((e) => e.type === "dir")).toBe(true);
+    expect(out.entries.some((e) => e.path === "src")).toBe(true);
+    expect(out.entries.some((e) => e.path.includes("app.ts"))).toBe(false);
+  });
+
   test("works under default deny-all permissions", async () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: { "note.txt": "secret" },
@@ -268,14 +308,11 @@ describe("createFileSystemToolkit", () => {
     expect(kit.tools.list).toBeDefined();
     expect(kit.tools.glob).toBeDefined();
     expect(kit.tools.grep).toBeDefined();
-    expect(await kit.prompt()).toEqual(
-      await filesystemPrompt({
-        permissions: DEFAULT_FILESYSTEM_PERMISSIONS,
-        adapter,
-      }),
+    expect(kit.prompt()).toEqual(
+      filesystemPrompt({ permissions: DEFAULT_FILESYSTEM_PERMISSIONS }),
     );
-    expect(await kit.prompt()).toContain('"mode": "deny"');
-    expect(await kit.prompt()).toContain('"**"');
+    expect(kit.prompt()).toContain('"mode": "deny"');
+    expect(kit.prompt()).toContain('"**"');
     expect(kit.state.adapter).toBe(adapter);
     expect(kit.state.permissions).toEqual(DEFAULT_FILESYSTEM_PERMISSIONS);
   });
@@ -289,30 +326,18 @@ describe("createFileSystemToolkit", () => {
         { mode: "deny", operations: ["write"], paths: ["src/secret/**"] },
       ],
     });
-    expect(await kit.prompt()).toContain('"mode": "allow"');
-    expect(await kit.prompt()).toContain('"src/**"');
-    expect(await kit.prompt()).toContain('"src/secret/**"');
-    expect(await kit.prompt()).toContain("Configured permissions");
+    expect(kit.prompt()).toContain('"mode": "allow"');
+    expect(kit.prompt()).toContain('"src/**"');
+    expect(kit.prompt()).toContain('"src/secret/**"');
+    expect(kit.prompt()).toContain("Configured permissions");
   });
 
-  test("prompt includes truncated filesystem overview", async () => {
-    const adapter = await MemoryFileSystem.create({
-      initialFiles: {
-        "README.md": "hi",
-        "src/app.ts": "x",
-        "src/lib/util.ts": "y",
-        "a/b/c/d/e.txt": "z",
-      },
-    });
-    const text = await createFileSystemToolkit({
-      adapter,
-      ...allowAll,
-    }).prompt();
-    expect(text).toContain("Filesystem overview");
-    expect(text).toContain("README.md");
-    expect(text).toContain("src/");
-    expect(text).toContain("app.ts");
-    expect(text).not.toContain("e.txt");
+  test("prompt encourages list for workspace overview", () => {
+    const text = filesystemPrompt();
+    expect(text).toContain("list");
+    expect(text).toContain("maxDepth");
+    expect(text).toContain("directoriesOnly");
+    expect(text).not.toContain("Filesystem overview");
   });
 
   test("denies all operations by default", async () => {

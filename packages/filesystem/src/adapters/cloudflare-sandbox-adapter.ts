@@ -1,7 +1,7 @@
 import type { ISandbox } from "@cloudflare/sandbox";
 import { PassThrough, type Readable, Writable } from "node:stream";
 import { posix } from "node:path";
-import { FileSystemAdapter, type FileStat } from "./index";
+import { FileSystemAdapter, type FileInfo } from "./index";
 import { resolvePath } from "../path";
 
 export type CloudflareSandboxFileSystemCreateOptions = {
@@ -77,13 +77,13 @@ export class CloudflareSandboxFileSystem extends FileSystemAdapter {
     });
   }
 
-  async readDir(path: string): Promise<FileStat[]> {
+  async readDir(path: string): Promise<FileInfo[]> {
     const { sandboxPath, adapterDir } = toSandboxPathWithAdapterDir(
       this.root,
       path,
     );
     const listing = await this.sandbox.listFiles(sandboxPath);
-    const stats: FileStat[] = [];
+    const stats: FileInfo[] = [];
     for (const entry of listing.files) {
       if (!isImmediateChild(entry.relativePath)) {
         continue;
@@ -100,7 +100,7 @@ export class CloudflareSandboxFileSystem extends FileSystemAdapter {
     return stats.sort((a, b) => a.path.localeCompare(b.path));
   }
 
-  override async readDirRecursive(path: string): Promise<FileStat[]> {
+  override async readDirRecursive(path: string): Promise<FileInfo[]> {
     const { sandboxPath, adapterDir } = toSandboxPathWithAdapterDir(
       this.root,
       path,
@@ -108,7 +108,7 @@ export class CloudflareSandboxFileSystem extends FileSystemAdapter {
     const listing = await this.sandbox.listFiles(sandboxPath, {
       recursive: true,
     });
-    const stats: FileStat[] = [];
+    const stats: FileInfo[] = [];
     for (const entry of listing.files) {
       if (entry.type === "other") {
         continue;

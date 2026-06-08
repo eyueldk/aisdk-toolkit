@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import type { Readable, Writable } from "node:stream";
 import { basename, dirname, relative, resolve, sep } from "pathe";
-import { FileSystemAdapter, type FileStat } from "./index";
+import { FileSystemAdapter, type FileInfo } from "./index";
 import { resolvePath } from "../path";
 export type LocalFileSystemCreateOptions = {
   /** Host directory (absolute or relative). Resolved and created if missing. Adapter paths cannot escape it. */
@@ -45,7 +45,7 @@ export class LocalFileSystem extends FileSystemAdapter {
     return fsCreateWriteStream(disk);
   }
 
-  async readDir(path: string): Promise<FileStat[]> {
+  async readDir(path: string): Promise<FileInfo[]> {
     const { disk, adapterDir } = toDiskPathWithAdapterDir(this.root, path);
     const entries = await fs.readdir(disk, { withFileTypes: true });
     return entries

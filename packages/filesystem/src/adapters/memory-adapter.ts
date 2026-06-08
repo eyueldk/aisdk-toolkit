@@ -1,7 +1,7 @@
 import type { Readable, Writable } from "node:stream";
 import { memfs, type IFs } from "memfs";
 import { dirname } from "pathe";
-import { FileSystemAdapter, type FileStat } from "./index";
+import { FileSystemAdapter, type FileInfo } from "./index";
 import { resolvePath } from "../path";
 export type MemoryFileSystemCreateOptions = {
   /** Optional path → UTF-8 contents map (POSIX-style keys, relative to `/`). */
@@ -41,7 +41,7 @@ export class MemoryFileSystem extends FileSystemAdapter {
     return this.fs.createWriteStream(p);
   }
 
-  async readDir(path: string): Promise<FileStat[]> {
+  async readDir(path: string): Promise<FileInfo[]> {
     const base = toMemfsPath(path);
     const adapterDir = resolvePath(path);
     const entries = await this.fs.promises.readdir(base, { withFileTypes: true });

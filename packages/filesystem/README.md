@@ -41,7 +41,7 @@ await generateText({
   model: yourLanguageModel,
   tools,
   stopWhen: stepCountIs(20),
-  system: `You can use filesystem tools.\n\n${await prompt()}`,
+  system: `You can use filesystem tools.\n\n${prompt()}`,
   prompt: "Read README.md and summarize it in one sentence.",
 });
 ```
@@ -137,7 +137,7 @@ Each tool returns a **structured JSON object** with result-only fields (inputs l
 | **`readFile`** | `{ content }` |
 | **`writeFile`** | `{ created }` — requires **`overwrite: true`** to replace an existing file |
 | **`editFile`** | `{ changed, diff }` — **`diff`** is a unified diff (via [`diff`](https://github.com/kpdecker/jsdiff)) |
-| **`list`** | `{ entries: [{ type, path }] }` |
+| **`list`** | `{ entries: [{ type, path }] }` — optional **`recursive`**, **`maxDepth`**, **`directoriesOnly`** |
 | **`glob`** | `{ paths }` |
 | **`grep`** | `{ matches: [{ path, line, text }] }` |
 
@@ -159,11 +159,16 @@ createFileSystemToolkit({
 
 Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; unmatched paths are allowed when you supply explicit rules. **`read`** / **`write`** apply to **file content** only — **`list`** and **`glob`** are always available for path discovery.
 
-**`prompt()`** is async — it returns permissions as JSON plus a brief truncated filesystem overview (recursive listing, default depth **2**, max **50** entries). Override with **`overviewMaxDepth`** / **`overviewMaxEntries`** on **`filesystemPrompt({ adapter, permissions, … })`**.
+**`prompt()`** is synchronous — it returns permissions as JSON and guidance to use **`list`** (with **`recursive`**, **`maxDepth`**, **`directoriesOnly`**) for a workspace overview.
 
 **Cloudflare Sandbox:** pass an **`ISandbox`** from `getSandbox(env.Sandbox, id)` in your Worker.
 
 ## Migration
+
+### 2.1 → 2.2
+
+- **`prompt()`** / **`filesystemPrompt()`** are synchronous again (no filesystem snapshot in the prompt). Use the **`list`** tool for overviews; optional **`maxDepth`** and **`directoriesOnly`** on **`list`**.
+- Adapter listing type renamed **`FileStat`** → **`FileInfo`** (and **`FileInfoType`**).
 
 ### 2.0 → 2.1
 
@@ -171,7 +176,7 @@ Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[
 
 ### 1.6.2 → 2.0
 
-- Toolkit **`hint`** string replaced by **`await prompt()`** — async; includes configured permissions (JSON) and a truncated filesystem overview. Standalone export: **`filesystemPrompt()`** (replaces **`FILE_SYSTEM_HINT`**).
+- Toolkit **`hint`** string replaced by **`prompt()`** — includes configured permissions (JSON). Standalone export: **`filesystemPrompt()`** (replaces **`FILE_SYSTEM_HINT`**).
 - Omitted **`permissions`** defaults to **deny-all** for file content (**`read`** / **`write`**). **`list`** and **`glob`** are always available for path discovery.
 
 ### 1.6.1 → 1.6.2

@@ -3,7 +3,7 @@ import type { Container } from "dockerode";
 import Dockerode from "dockerode";
 import { posix } from "node:path";
 import { extract, pack } from "tar-stream";
-import { FileSystemAdapter, type FileStat } from "./index";
+import { FileSystemAdapter, type FileInfo } from "./index";
 import { resolvePath } from "../path";
 export type DockerFileSystemCreateOptions = {
   /** Container ID or name. */
@@ -88,7 +88,7 @@ export class DockerFileSystem extends FileSystemAdapter {
     });
   }
 
-  async readDir(path: string): Promise<FileStat[]> {
+  async readDir(path: string): Promise<FileInfo[]> {
     const { containerPath, adapterDir } = toContainerPathWithAdapterDir(
       this.root,
       path,
@@ -101,7 +101,7 @@ export class DockerFileSystem extends FileSystemAdapter {
     });
   }
 
-  override async readDirRecursive(path: string): Promise<FileStat[]> {
+  override async readDirRecursive(path: string): Promise<FileInfo[]> {
     const { containerPath, adapterDir } = toContainerPathWithAdapterDir(
       this.root,
       path,
@@ -141,12 +141,12 @@ async function listContainerPaths(
   container: Container,
   useFindPrintf: boolean,
   options: ListContainerPathsOptions,
-): Promise<FileStat[]> {
+): Promise<FileInfo[]> {
   const lines = useFindPrintf
     ? await listWithFindPrintf(container, options)
     : await listWithFindByType(container, options);
 
-  const stats: FileStat[] = [];
+  const stats: FileInfo[] = [];
   for (const line of lines) {
     const stat = parseFindLine(line, options);
     if (stat) stats.push(stat);
@@ -220,12 +220,12 @@ async function execFindPaths(
 function parseFindLine(
   line: string,
   options: ListContainerPathsOptions,
-): FileStat | undefined {
+): FileInfo | undefined {
   const tab = line.indexOf("\t");
   if (tab < 0) return undefined;
   const typeChar = line.slice(0, tab);
   const containerAbs = line.slice(tab + 1);
-  const type: FileStat["type"] = typeChar === "d" ? "dir" : "file";
+  const type: FileInfo["type"] = typeChar === "d" ? "dir" : "file";
 
   if (options.maxDepth === 1) {
     const name = posix.basename(containerAbs);

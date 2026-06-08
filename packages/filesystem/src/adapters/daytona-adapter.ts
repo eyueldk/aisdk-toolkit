@@ -1,7 +1,7 @@
 import { Daytona, DaytonaNotFoundError, type Sandbox } from "@daytonaio/sdk";
 import { PassThrough, Writable, type Readable } from "node:stream";
 import { posix } from "node:path";
-import { FileSystemAdapter, type FileStat } from "./index";
+import { FileSystemAdapter, type FileInfo } from "./index";
 import { resolvePath } from "../path";
 
 export type DaytonaFileSystemCreateOptions = {
@@ -92,20 +92,20 @@ export class DaytonaFileSystem extends FileSystemAdapter {
     });
   }
 
-  async readDir(path: string): Promise<FileStat[]> {
+  async readDir(path: string): Promise<FileInfo[]> {
     const { sandboxPath, adapterDir } = toSandboxPathWithAdapterDir(
       this.root,
       path,
     );
     const entries = await this.sandbox.fs.listFiles(sandboxPath);
-    const stats: FileStat[] = entries.map((entry) => ({
+    const stats: FileInfo[] = entries.map((entry) => ({
       type: entry.isDir ? "dir" : "file",
       path: daytonaAdapterChildPath(adapterDir, entry.name),
     }));
     return stats.sort((a, b) => a.path.localeCompare(b.path));
   }
 
-  override async readDirRecursive(path: string): Promise<FileStat[]> {
+  override async readDirRecursive(path: string): Promise<FileInfo[]> {
     const { sandboxPath, adapterDir } = toSandboxPathWithAdapterDir(
       this.root,
       path,
@@ -123,7 +123,7 @@ async function listSandboxSubtree(
   sandbox: Sandbox,
   sandboxPath: string,
   adapterDir: string,
-): Promise<FileStat[]> {
+): Promise<FileInfo[]> {
   let entries: Awaited<ReturnType<Sandbox["fs"]["listFiles"]>>;
   try {
     entries = await sandbox.fs.listFiles(sandboxPath);
@@ -131,7 +131,7 @@ async function listSandboxSubtree(
     throw mapDaytonaFsError(err, sandboxPath);
   }
 
-  const stats: FileStat[] = [];
+  const stats: FileInfo[] = [];
   for (const entry of entries) {
     const childAdapter = daytonaAdapterChildPath(adapterDir, entry.name);
     const childSandbox = posix.join(sandboxPath, entry.name);

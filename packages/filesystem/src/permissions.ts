@@ -1,5 +1,5 @@
 import { minimatch } from "minimatch";
-import type { FileStat, FileSystemAdapter } from "./adapters";
+import type { FileSystemAdapter } from "./adapters";
 import { resolvePath } from "./path";
 
 export type FileSystemPermissionMode = "allow" | "deny";
@@ -152,27 +152,4 @@ export async function collectReadableFilePaths(
   dir = ".",
 ): Promise<string[]> {
   return filterReadablePaths(await collectAllFilePaths(adapter, dir), rules);
-}
-
-/**
- * Lists entries under `dir`. Directory listing is not gated by read/write permissions.
- * When `recursive`, descends into all subdirectories.
- */
-export async function collectVisibleEntries(
-  adapter: FileSystemAdapter,
-  dir: string,
-  recursive: boolean,
-): Promise<FileStat[]> {
-  const out: FileStat[] = [];
-  const visit = async (path: string): Promise<void> => {
-    const entries = await adapter.readDir(path);
-    for (const entry of entries) {
-      out.push(entry);
-      if (recursive && entry.type === "dir") {
-        await visit(entry.path);
-      }
-    }
-  };
-  await visit(dir);
-  return out;
 }
