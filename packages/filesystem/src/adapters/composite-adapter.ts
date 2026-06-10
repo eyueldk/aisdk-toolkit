@@ -68,6 +68,42 @@ export class CompositeFileSystem extends FileSystemAdapter {
     return listVirtualChildren(norm, this.mounts);
   }
 
+  async remove(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    const route = this.resolveRoute(path);
+    if (!route) {
+      throw new Error(`No mount for path: ${resolvePath(path)}`);
+    }
+    await route.adapter.remove(route.relativePath, options);
+  }
+
+  async mkdir(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    const route = this.resolveRoute(path);
+    if (!route) {
+      throw new Error(`No mount for path: ${resolvePath(path)}`);
+    }
+    await route.adapter.mkdir(route.relativePath, options);
+  }
+
+  async move(from: string, to: string): Promise<void> {
+    const source = this.resolveRoute(from);
+    const destination = this.resolveRoute(to);
+    if (!source || !destination) {
+      throw new Error(`No mount for move: ${resolvePath(from)} -> ${resolvePath(to)}`);
+    }
+    if (source.mountKey !== destination.mountKey) {
+      throw new Error(
+        `Cross-mount move is not supported: ${resolvePath(from)} -> ${resolvePath(to)}`,
+      );
+    }
+    await source.adapter.move(source.relativePath, destination.relativePath);
+  }
+
   private resolveRoute(path: string): Route | null {
     const norm = resolvePath(path);
 

@@ -1,5 +1,5 @@
 import type { FileSystemAdapter } from "./adapters";
-import { prompt as filesystemPrompt } from "./hint";
+import { prompt as filesystemPrompt, type FileSystemEditMode } from "./hint";
 import {
   resolveFileSystemPermissions,
   type FileSystemPermissionRule,
@@ -7,6 +7,7 @@ import {
 import {
   createFileSystemTools,
   type CreateFileSystemToolsOptions,
+  type FileSystemTools,
 } from "./tools";
 
 export type Toolkit<TTools extends Record<string, unknown>, TState> = {
@@ -15,11 +16,12 @@ export type Toolkit<TTools extends Record<string, unknown>, TState> = {
   state: TState;
 };
 
-export type FileSystemTools = ReturnType<typeof createFileSystemTools>;
+export type { FileSystemTools };
 
 export type FileSystemToolkitState = {
   adapter: FileSystemAdapter;
   permissions: FileSystemPermissionRule[];
+  editMode: FileSystemEditMode;
 };
 
 export type FileSystemToolkit = Toolkit<
@@ -34,13 +36,18 @@ export function createFileSystemToolkit(
   options: CreateFileSystemToolsOptions,
 ): FileSystemToolkit {
   const permissions = resolveFileSystemPermissions(options.permissions);
-  const tools = createFileSystemTools({ ...options, permissions });
+  const editMode = options.editMode ?? "applyPatch";
+  const tools =
+    editMode === "tools"
+      ? createFileSystemTools({ ...options, permissions, editMode: "tools" })
+      : createFileSystemTools({ ...options, permissions, editMode: "applyPatch" });
   return {
     tools,
-    prompt: () => filesystemPrompt({ permissions }),
+    prompt: () => filesystemPrompt({ permissions, editMode }),
     state: {
       adapter: options.adapter,
       permissions,
+      editMode,
     },
   };
 }

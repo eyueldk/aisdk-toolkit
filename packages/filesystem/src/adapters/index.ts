@@ -38,6 +38,16 @@ export type FileEncodingOptions = {
   encoding?: "utf8";
 };
 
+export type FileSystemRemoveOptions = {
+  /** When true, remove a directory and its contents. Required to delete directories. */
+  recursive?: boolean;
+};
+
+export type FileSystemMkdirOptions = {
+  /** Create parent directories as needed (`mkdir -p`). */
+  recursive?: boolean;
+};
+
 /**
  * Pluggable filesystem backend for {@link createFileSystemToolkit} and {@link createFileSystemTools}.
  * Implement streams and {@link readDir}; {@link readFile} / {@link writeFile} use those on the base class.
@@ -47,6 +57,12 @@ export abstract class FileSystemAdapter {
   abstract createWriteStream(path: string): Writable;
   /** Lists immediate children of `path` (not recursive). */
   abstract readDir(path: string): Promise<FileInfo[]>;
+  /** Removes a file or directory at `path`. Pass `{ recursive: true }` to delete directories. */
+  abstract remove(path: string, options?: FileSystemRemoveOptions): Promise<void>;
+  /** Creates a directory at `path`. */
+  abstract mkdir(path: string, options?: FileSystemMkdirOptions): Promise<void>;
+  /** Moves or renames `from` to `to`. */
+  abstract move(from: string, to: string): Promise<void>;
 
   readFile(path: string): Promise<Buffer>;
   readFile(path: string, options: { encoding: "utf8" }): Promise<string>;

@@ -7,12 +7,18 @@ import {
   PermissionDeniedError,
 } from "../src/index";
 import { MemoryFileSystem } from "../src/adapters/memory-adapter";
+import { createGlobTool } from "../src/tools/glob-tool";
 
 const toolOpts = { toolCallId: "test", messages: [] } as const;
 const allowAll = {
   permissions: [
     { mode: "allow" as const, operations: ["read" as const, "write" as const], paths: ["**"] },
   ],
+};
+const classicTools = { editMode: "tools" as const };
+
+type GlobOutput = {
+  entries: Array<{ type: "file" | "dir"; path: string }>;
 };
 
 async function unwrapToolOutput<T>(output: T | AsyncIterable<T>): Promise<T> {
@@ -29,10 +35,49 @@ async function unwrapToolOutput<T>(output: T | AsyncIterable<T>): Promise<T> {
   return output;
 }
 
-describe("readFile / writeFile / editFile / list tools", () => {
-  test("round-trip writeFile, list, readFile, editFile", async () => {
+async function unwrapToolStream<T>(output: T | AsyncIterable<T>): Promise<T[]> {
+  if (
+    output !== null &&
+    typeof output === "object" &&
+    Symbol.asyncIterator in output
+  ) {
+    const chunks: T[] = [];
+    for await (const value of output) {
+      chunks.push(value);
+    }
+    return chunks;
+  }
+  return [output];
+}
+
+type ToolsWithGlob = { glob: ReturnType<typeof createGlobTool> };
+
+async function runGlob(
+  tools: ToolsWithGlob,
+  input: { pattern: string; include?: ("file" | "dir")[]; stream?: boolean },
+): Promise<GlobOutput> {
+  const raw = (await tools.glob.execute!(input, {
+    ...toolOpts,
+    messages: [],
+  })) as unknown as GlobOutput | AsyncIterable<GlobOutput>;
+  return unwrapToolOutput(raw);
+}
+
+async function runGlobStream(
+  tools: ToolsWithGlob,
+  input: { pattern: string; include?: ("file" | "dir")[]; stream?: boolean },
+): Promise<GlobOutput[]> {
+  const raw = (await tools.glob.execute!(input, {
+    ...toolOpts,
+    messages: [],
+  })) as unknown as GlobOutput | AsyncIterable<GlobOutput>;
+  return unwrapToolStream(raw);
+}
+
+describe("readFile / writeFile / editFile / glob tools", () => {
+  test("round-trip writeFile, glob, readFile, editFile", async () => {
     const adapter = await MemoryFileSystem.create();
-    const tools = createFileSystemTools({ adapter, ...allowAll });
+    const tools = createFileSystemTools({ adapter, ...allowAll, ...classicTools });
 
     const writeResult = await unwrapToolOutput(
       await tools.writeFile.execute!(
@@ -42,12 +87,10 @@ describe("readFile / writeFile / editFile / list tools", () => {
     );
     expect(writeResult).toEqual({ created: true });
 
-    const listed = await unwrapToolOutput(
-      await tools.list.execute!(
-        { path: "src" },
-        { ...toolOpts, messages: [] },
-      ),
-    );
+    const listed = await runGlob(tools, {
+      pattern: "src/*",
+      include: ["file"],
+    });
     expect(listed.entries.length).toBeGreaterThan(0);
     expect(listed.entries.some((e) => e.path.includes("hello.txt"))).toBe(true);
 
@@ -83,7 +126,7 @@ describe("writeFile tool", () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: { "note.txt": "original" },
     });
-    const tools = createFileSystemTools({ adapter, ...allowAll });
+    const tools = createFileSystemTools({ adapter, ...allowAll, ...classicTools });
 
     await expect(
       tools.writeFile.execute!(
@@ -110,6 +153,7 @@ describe("createFileSystemTools", () => {
     const adapter = await MemoryFileSystem.create();
     const tools = createFileSystemTools({
       adapter,
+      ...classicTools,
       permissions: [
         { mode: "deny", operations: ["write"], paths: ["secret/**"] },
         { mode: "allow", operations: ["read", "write"], paths: ["**"] },
@@ -126,7 +170,7 @@ describe("createFileSystemTools", () => {
 });
 
 describe("glob tool", () => {
-  test("returns matching paths", async () => {
+  test("returns matching file entries", async () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: {
         "src/a.ts": "x",
@@ -134,17 +178,48 @@ describe("glob tool", () => {
       },
     });
     const tools = createFileSystemTools({ adapter, ...allowAll });
-    const out = await unwrapToolOutput(
-      await tools.glob.execute!(
-        { pattern: "src/**/*.ts" },
-        { ...toolOpts, messages: [] },
-      ),
+    const out = await runGlob(tools, {
+      pattern: "src/**/*.ts",
+      include: ["file"],
+    });
+    expect(out.entries).toEqual([{ type: "file", path: "src/a.ts" }]);
+  });
+
+  test("include dirs and files", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: { "src/app.ts": "x" },
+    });
+    const tools = createFileSystemTools({ adapter, ...allowAll });
+    const out = await runGlob(tools, {
+      pattern: "**",
+      include: ["file", "dir"],
+    });
+    expect(out.entries.some((e) => e.type === "dir" && e.path === "src")).toBe(
+      true,
     );
-    expect(out.paths).toEqual(["src/a.ts"]);
+    expect(out.entries.some((e) => e.path === "src/app.ts")).toBe(true);
+  });
+
+  test("streams entry batches", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: {
+        "a.txt": "1",
+        "b.txt": "2",
+        "c.txt": "3",
+      },
+    });
+    const tools = createFileSystemTools({ adapter, ...allowAll });
+    const chunks = await runGlobStream(tools, {
+      pattern: "**/*.txt",
+      include: ["file"],
+      stream: true,
+    });
+    const entries = chunks.flatMap((chunk) => chunk.entries);
+    expect(entries).toHaveLength(3);
   });
 });
 
-describe("list tool permissions", () => {
+describe("glob tool permissions", () => {
   test("lists all paths even when file content read is denied", async () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: {
@@ -163,54 +238,12 @@ describe("list tool permissions", () => {
         { mode: "allow", operations: ["read", "write"], paths: ["**"] },
       ],
     });
-    const out = await unwrapToolOutput(
-      await tools.list.execute!(
-        { path: "src", recursive: true },
-        { ...toolOpts, messages: [] },
-      ),
-    );
+    const out = await runGlob(tools, {
+      pattern: "src/**",
+      include: ["file", "dir"],
+    });
     expect(out.entries.some((e) => e.path.includes("public.txt"))).toBe(true);
     expect(out.entries.some((e) => e.path.includes("secret"))).toBe(true);
-  });
-
-  test("maxDepth limits recursive listing", async () => {
-    const adapter = await MemoryFileSystem.create({
-      initialFiles: {
-        "README.md": "hi",
-        "src/app.ts": "x",
-        "src/lib/util.ts": "y",
-        "a/b/c/d/e.txt": "z",
-      },
-    });
-    const tools = createFileSystemTools({ adapter, ...allowAll });
-    const shallow = await unwrapToolOutput(
-      await tools.list.execute!(
-        { path: ".", recursive: true, maxDepth: 2 },
-        { ...toolOpts, messages: [] },
-      ),
-    );
-    expect(shallow.entries.some((e) => e.path === "README.md")).toBe(true);
-    expect(shallow.entries.some((e) => e.path === "src/app.ts")).toBe(true);
-    expect(shallow.entries.some((e) => e.path === "a/b/c/d/e.txt")).toBe(false);
-  });
-
-  test("directoriesOnly returns only directories", async () => {
-    const adapter = await MemoryFileSystem.create({
-      initialFiles: {
-        "README.md": "hi",
-        "src/app.ts": "x",
-      },
-    });
-    const tools = createFileSystemTools({ adapter, ...allowAll });
-    const out = await unwrapToolOutput(
-      await tools.list.execute!(
-        { path: ".", recursive: true, directoriesOnly: true },
-        { ...toolOpts, messages: [] },
-      ),
-    );
-    expect(out.entries.every((e) => e.type === "dir")).toBe(true);
-    expect(out.entries.some((e) => e.path === "src")).toBe(true);
-    expect(out.entries.some((e) => e.path.includes("app.ts"))).toBe(false);
   });
 
   test("works under default deny-all permissions", async () => {
@@ -218,10 +251,72 @@ describe("list tool permissions", () => {
       initialFiles: { "note.txt": "secret" },
     });
     const { tools } = createFileSystemToolkit({ adapter });
-    const out = await unwrapToolOutput(
-      await tools.list.execute!({ path: "." }, { ...toolOpts, messages: [] }),
-    );
+    const out = await runGlob(tools, { pattern: "*", include: ["file"] });
     expect(out.entries.some((e) => e.path.includes("note.txt"))).toBe(true);
+  });
+});
+
+describe("remove tool", () => {
+  test("removes a file", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: { "note.txt": "bye" },
+    });
+    const tools = createFileSystemTools({ adapter, ...allowAll, ...classicTools });
+    await unwrapToolOutput(
+      await tools.remove.execute!(
+        { path: "note.txt" },
+        { ...toolOpts, messages: [] },
+      ),
+    );
+    await expect(adapter.readFile("note.txt")).rejects.toThrow();
+  });
+
+  test("refuses directory without recursive", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: { "src/app.ts": "x" },
+    });
+    const tools = createFileSystemTools({ adapter, ...allowAll, ...classicTools });
+    await expect(
+      tools.remove.execute!(
+        { path: "src" },
+        { ...toolOpts, messages: [] },
+      ),
+    ).rejects.toThrow(/recursive: true/);
+  });
+
+  test("removes directory when recursive", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: { "src/app.ts": "x" },
+    });
+    const tools = createFileSystemTools({ adapter, ...allowAll, ...classicTools });
+    await unwrapToolOutput(
+      await tools.remove.execute!(
+        { path: "src", recursive: true },
+        { ...toolOpts, messages: [] },
+      ),
+    );
+    const out = await runGlob(tools, {
+      pattern: "src/**",
+      include: ["file", "dir"],
+    });
+    expect(out.entries).toHaveLength(0);
+  });
+});
+
+describe("move tool", () => {
+  test("move renames a file", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: { "old.txt": "payload" },
+    });
+    const tools = createFileSystemTools({ adapter, ...allowAll, ...classicTools });
+    await unwrapToolOutput(
+      await tools.move.execute!(
+        { from: "old.txt", to: "new.txt" },
+        { ...toolOpts, messages: [] },
+      ),
+    );
+    expect((await adapter.readFile("new.txt")).toString("utf8")).toBe("payload");
+    await expect(adapter.readFile("old.txt")).rejects.toThrow();
   });
 });
 
@@ -236,6 +331,7 @@ describe("grep tool", () => {
     const readFile = vi.spyOn(adapter, "readFile");
     const tools = createFileSystemTools({
       adapter,
+      ...classicTools,
       permissions: [
         { mode: "deny", operations: ["read"], paths: ["secret/**"] },
         { mode: "allow", operations: ["read", "write"], paths: ["**"] },
@@ -257,7 +353,7 @@ describe("grep tool", () => {
 
   test("rejects unsafe regex patterns", async () => {
     const adapter = await MemoryFileSystem.create();
-    const tools = createFileSystemTools({ adapter, ...allowAll });
+    const tools = createFileSystemTools({ adapter, ...allowAll, ...classicTools });
     await expect(
       tools.grep.execute!(
         { pattern: "(a+)+$" },
@@ -270,7 +366,7 @@ describe("grep tool", () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: { "src/a.ts": "const a = 1\nother\n" },
     });
-    const tools = createFileSystemTools({ adapter, ...allowAll });
+    const tools = createFileSystemTools({ adapter, ...allowAll, ...classicTools });
     const out = await unwrapToolOutput(
       await tools.grep.execute!(
         { pattern: "const", pathGlob: "src/**/*.ts" },
@@ -291,7 +387,7 @@ describe("createFileSystemToolkit", () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: { "a.txt": "A" },
     });
-    const { tools } = createFileSystemToolkit({ adapter, ...allowAll });
+    const { tools } = createFileSystemToolkit({ adapter, ...allowAll, ...classicTools });
     expect(
       await unwrapToolOutput(
         await tools.readFile.execute!({ path: "a.txt" }, { ...toolOpts, messages: [] }),
@@ -299,15 +395,16 @@ describe("createFileSystemToolkit", () => {
     ).toEqual({ content: "A" });
   });
 
-  test("returns tools, prompt, and state", async () => {
+  test("returns applyPatch tools by default", async () => {
     const adapter = await MemoryFileSystem.create();
     const kit = createFileSystemToolkit({ adapter });
     expect(kit.tools.readFile).toBeDefined();
-    expect(kit.tools.writeFile).toBeDefined();
-    expect(kit.tools.editFile).toBeDefined();
-    expect(kit.tools.list).toBeDefined();
+    expect("applyPatch" in kit.tools && kit.tools.applyPatch).toBeTruthy();
     expect(kit.tools.glob).toBeDefined();
     expect(kit.tools.grep).toBeDefined();
+    expect(kit.state.editMode).toBe("applyPatch");
+    expect(kit.prompt()).toContain("applyPatch");
+    expect(kit.prompt()).toContain("*** Begin Patch");
     expect(kit.prompt()).toEqual(
       filesystemPrompt({ permissions: DEFAULT_FILESYSTEM_PERMISSIONS }),
     );
@@ -315,6 +412,18 @@ describe("createFileSystemToolkit", () => {
     expect(kit.prompt()).toContain('"**"');
     expect(kit.state.adapter).toBe(adapter);
     expect(kit.state.permissions).toEqual(DEFAULT_FILESYSTEM_PERMISSIONS);
+  });
+
+  test("returns classic edit tools when editMode is tools", async () => {
+    const adapter = await MemoryFileSystem.create();
+    const kit = createFileSystemToolkit({ adapter, ...classicTools });
+    expect("writeFile" in kit.tools && kit.tools.writeFile).toBeTruthy();
+    expect("editFile" in kit.tools && kit.tools.editFile).toBeTruthy();
+    expect("remove" in kit.tools && kit.tools.remove).toBeTruthy();
+    expect("move" in kit.tools && kit.tools.move).toBeTruthy();
+    expect(kit.state.editMode).toBe("tools");
+    expect(kit.prompt()).toContain("writeFile");
+    expect(kit.prompt()).not.toContain("*** Begin Patch");
   });
 
   test("prompt includes configured permissions as JSON", async () => {
@@ -332,12 +441,43 @@ describe("createFileSystemToolkit", () => {
     expect(kit.prompt()).toContain("Configured permissions");
   });
 
-  test("prompt encourages list for workspace overview", () => {
-    const text = filesystemPrompt();
-    expect(text).toContain("list");
-    expect(text).toContain("maxDepth");
-    expect(text).toContain("directoriesOnly");
+  test("prompt documents glob discovery", () => {
+    const text = filesystemPrompt({ editMode: "tools" });
+    expect(text).toContain("glob");
+    expect(text).toContain("include");
     expect(text).not.toContain("Filesystem overview");
+  });
+
+  test("applyPatch tool applies opencode patch", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: {
+        "src/app.py": 'def greet():\nprint("Hi")\n',
+        "obsolete.txt": "old",
+      },
+    });
+    const tools = createFileSystemTools({ adapter, ...allowAll, editMode: "applyPatch" });
+    const patch = `*** Begin Patch
+*** Add File: hello.txt
++Hello world
+*** Update File: src/app.py
+*** Move to: src/main.py
+@@ def greet():
+-print("Hi")
++print("Hello, world!")
+*** Delete File: obsolete.txt
+*** End Patch`;
+
+    if (!("applyPatch" in tools)) {
+      throw new Error("expected applyPatch tool");
+    }
+    const out = await unwrapToolOutput(
+      await tools.applyPatch.execute!({ patch }, { ...toolOpts, messages: [] }),
+    );
+    expect(out.applied).toEqual([
+      { action: "add", path: "hello.txt" },
+      { action: "move", path: "src/app.py", moveTo: "src/main.py" },
+      { action: "delete", path: "obsolete.txt" },
+    ]);
   });
 
   test("denies all operations by default", async () => {

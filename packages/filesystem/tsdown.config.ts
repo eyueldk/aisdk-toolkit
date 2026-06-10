@@ -9,7 +9,6 @@ export default defineConfig({
     "adapters/docker": "src/adapters/docker-adapter.ts",
     "adapters/daytona": "src/adapters/daytona-adapter.ts",
     "adapters/composite": "src/adapters/composite-adapter.ts",
-    "adapters/cloudflare-sandbox": "src/adapters/cloudflare-sandbox-adapter.ts",
   },
   format: ["esm"],
   clean: true,

@@ -56,6 +56,31 @@ export class MemoryFileSystem extends FileSystemAdapter {
         path: memoryAdapterChildPath(adapterDir, d.name),
       }));
   }
+
+  async remove(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    const target = toMemfsPath(path);
+    if (options?.recursive) {
+      await this.fs.promises.rm(target, { recursive: true, force: true });
+      return;
+    }
+    await this.fs.promises.unlink(target);
+  }
+
+  async mkdir(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    await this.fs.promises.mkdir(toMemfsPath(path), {
+      recursive: options?.recursive ?? false,
+    });
+  }
+
+  async move(from: string, to: string): Promise<void> {
+    await this.fs.promises.rename(toMemfsPath(from), toMemfsPath(to));
+  }
 }
 
 type MemfsDirent = { name: string; isDirectory(): boolean };

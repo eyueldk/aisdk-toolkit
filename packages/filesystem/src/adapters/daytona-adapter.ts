@@ -117,6 +117,53 @@ export class DaytonaFileSystem extends FileSystemAdapter {
     );
     return stats.sort((a, b) => a.path.localeCompare(b.path));
   }
+
+  async remove(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    const remotePath = toSandboxPath(this.root, path);
+    try {
+      await this.sandbox.fs.deleteFile(remotePath, options?.recursive ?? false);
+    } catch (err) {
+      throw mapDaytonaFsError(err, remotePath);
+    }
+  }
+
+  async mkdir(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    const remotePath = toSandboxPath(this.root, path);
+    if (options?.recursive) {
+      const parts = remotePath.split("/").filter(Boolean);
+      let current = "";
+      for (const part of parts) {
+        current = current ? `${current}/${part}` : part;
+        try {
+          await this.sandbox.fs.createFolder(current, "755");
+        } catch {
+          // Parent or target directory may already exist.
+        }
+      }
+      return;
+    }
+    try {
+      await this.sandbox.fs.createFolder(remotePath, "755");
+    } catch (err) {
+      throw mapDaytonaFsError(err, remotePath);
+    }
+  }
+
+  async move(from: string, to: string): Promise<void> {
+    const source = toSandboxPath(this.root, from);
+    const destination = toSandboxPath(this.root, to);
+    try {
+      await this.sandbox.fs.moveFiles(source, destination);
+    } catch (err) {
+      throw mapDaytonaFsError(err, source);
+    }
+  }
 }
 
 async function listSandboxSubtree(

@@ -7,10 +7,11 @@ Pluggable filesystem tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap sto
 
 ## Features
 
-- **`createFileSystemToolkit({ adapter, permissions? })`** → `{ tools, prompt, state }`
-- Tools: **`readFile`**, **`writeFile`**, **`editFile`**, **`list`**, **`glob`**, **`grep`** — each returns a **structured object** (via AI SDK `outputSchema`)
+- **`createFileSystemToolkit({ adapter, permissions?, editMode? })`** → `{ tools, prompt, state }`
+- Default **`editMode: "applyPatch"`** — **`applyPatch`** (OpenCode-style patches) plus **`readFile`**, **`glob`**, **`grep`**
+- **`editMode: "tools"`** — granular **`writeFile`**, **`editFile`**, **`remove`**, **`move`** instead of **`applyPatch`**
 - Optional path **permissions** (first matching glob wins)
-- Adapters: memory, local disk, Docker container, Daytona sandbox, Cloudflare Sandbox, **composite** (multiple mounts)
+- Adapters: memory, local disk, Docker container, Daytona sandbox, **composite** (multiple mounts)
 
 ## Install
 
@@ -57,7 +58,6 @@ Import adapters from subpaths so bundlers (e.g. SSR) load only the runtime you n
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/docker` | **DockerFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/daytona` | **DaytonaFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/composite` | **CompositeFileSystem** |
-| `@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox` | **CloudflareSandboxFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters` | **FileSystemAdapter** types only |
 
 The main entry (`@eyueldk/aisdk-toolkit-filesystem`) exports the toolkit and **FileSystemAdapter** — not concrete adapters.
@@ -69,20 +69,6 @@ The main entry (`@eyueldk/aisdk-toolkit-filesystem`) exports the toolkit and **F
 | **DockerFileSystem** | `await DockerFileSystem.create({ container, root?, docker? })` | Running container; list via **`find`** |
 | **CompositeFileSystem** | `CompositeFileSystem.create({ mounts })` | Virtual union of adapters; mount keys must not overlap/nest |
 | **DaytonaFileSystem** | `await DaytonaFileSystem.create({ sandbox, root? })` or `{ sandboxId?, daytona? }` | Default **`root`**: `workspace` |
-| **CloudflareSandboxFileSystem** | `await CloudflareSandboxFileSystem.create({ sandbox, root? })` | [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) **`ISandbox`**; default **`root`**: `/workspace` |
-
-```ts
-import { getSandbox } from "@cloudflare/sandbox";
-import { createFileSystemToolkit } from "@eyueldk/aisdk-toolkit-filesystem";
-import { CloudflareSandboxFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox";
-
-const sandbox = getSandbox(env.Sandbox, "agent-1");
-const adapter = await CloudflareSandboxFileSystem.create({ sandbox, root: "/workspace" });
-const { tools, prompt } = createFileSystemToolkit({
-  adapter,
-  permissions: [{ mode: "allow", operations: ["read", "write"], paths: ["**"] }],
-});
-```
 
 ```ts
 import { LocalFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/local";
@@ -126,7 +112,7 @@ const { tools, prompt } = createFileSystemToolkit({
 });
 ```
 
-Paths like **`sandbox/src/app.ts`** route to the sandbox adapter; **`host/README.md`** routes to the host adapter. List **`/`** to see mount names.
+Paths like **`sandbox/src/app.ts`** route to the sandbox adapter; **`host/README.md`** routes to the host adapter. Use **`glob`** on **`/`** to see mount names.
 
 ## Tool outputs
 
@@ -137,8 +123,10 @@ Each tool returns a **structured JSON object** with result-only fields (inputs l
 | **`readFile`** | `{ content }` |
 | **`writeFile`** | `{ created }` — requires **`overwrite: true`** to replace an existing file |
 | **`editFile`** | `{ changed, diff }` — **`diff`** is a unified diff (via [`diff`](https://github.com/kpdecker/jsdiff)) |
-| **`list`** | `{ entries: [{ type, path }] }` — optional **`recursive`**, **`maxDepth`**, **`directoriesOnly`** |
-| **`glob`** | `{ paths }` |
+| **`applyPatch`** | `{ applied: [{ action, path, moveTo? }] }` — OpenCode patch envelope (`*** Begin Patch` … `*** End Patch`) |
+| **`remove`** | `{ removed }` — pass **`recursive: true`** to delete directories (`editMode: "tools"`) |
+| **`move`** | `{ moved }` (`editMode: "tools"`) |
+| **`glob`** | `{ entries: [{ type, path }] }` — optional **`path`**, **`include`**, **`stream`** |
 | **`grep`** | `{ matches: [{ path, line, text }] }` |
 
 ## Permissions
@@ -157,27 +145,51 @@ createFileSystemToolkit({
 });
 ```
 
-Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; unmatched paths are allowed when you supply explicit rules. **`read`** / **`write`** apply to **file content** only — **`list`** and **`glob`** are always available for path discovery.
+Rules: `{ mode: "allow" | "deny", operations: ["read" | "write"], paths: string[] }`. First match wins; unmatched paths are allowed when you supply explicit rules. **`read`** / **`write`** apply to **file content** only — **`glob`** is always available for path discovery.
 
-**`prompt()`** is synchronous — it returns permissions as JSON and guidance to use **`list`** (with **`recursive`**, **`maxDepth`**, **`directoriesOnly`**) for a workspace overview.
+**`prompt()`** is synchronous — it returns permissions as JSON and patch/edit guidance. With default **`editMode`**, it includes the OpenCode **`applyPatch`** format.
 
-**Cloudflare Sandbox:** pass an **`ISandbox`** from `getSandbox(env.Sandbox, id)` in your Worker.
+### `editMode`
+
+| Value | Edit tools | System prompt |
+| --- | --- | --- |
+| **`applyPatch`** (default) | **`applyPatch`** | OpenCode patch language |
+| **`tools`** | **`writeFile`**, **`editFile`**, **`remove`**, **`move`** | Granular edit tools |
+
+```ts
+createFileSystemToolkit({
+  adapter,
+  editMode: "tools",
+  permissions: [{ mode: "allow", operations: ["read", "write"], paths: ["**"] }],
+});
+```
 
 ## Migration
 
+### 2.4 → 2.5
+
+- Default **`editMode: "applyPatch"`** — **`applyPatch`** replaces **`writeFile`** / **`editFile`** / **`remove`** / **`move`** unless you pass **`editMode: "tools"`**.
+- **`prompt()`** documents the OpenCode patch format when **`editMode`** is **`applyPatch`**.
+- Low-level helpers **`parsePatch`** and **`applyPatchOperations`** are exported; diffs use **`applyDiff`** from **`@openai/agents`**.
+- **`CloudflareSandboxFileSystem`** and **`/adapters/cloudflare-sandbox`** removed.
+
+### 2.3 → 2.4
+
+- **`list`** tool removed — use **`glob`** with **`include: ["file", "dir"]`** and patterns such as `*` or `**`.
+- **`glob`** returns **`{ entries: [{ type, path }] }`** (not `{ paths }`); optional **`path`**, **`include`**, **`stream`**.
+- **`removeFile`** renamed **`remove`**; pass **`recursive: true`** to delete directories.
+- New tools: **`move`**.
+- Adapter methods: **`remove`**, **`mkdir`**, **`move`**; **`FileSystemAdapter.ls`** unchanged (adapter **`mkdir`** is not exposed as a tool).
+
 ### 2.1 → 2.2
 
-- **`prompt()`** / **`filesystemPrompt()`** are synchronous again (no filesystem snapshot in the prompt). Use the **`list`** tool for overviews; optional **`maxDepth`** and **`directoriesOnly`** on **`list`**.
+- **`prompt()`** / **`filesystemPrompt()`** are synchronous again (no filesystem snapshot in the prompt).
 - Adapter listing type renamed **`FileStat`** → **`FileInfo`** (and **`FileInfoType`**).
-
-### 2.0 → 2.1
-
-- **`CloudflareSandboxFileSystem`** for [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) via `@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox`.
 
 ### 1.6.2 → 2.0
 
 - Toolkit **`hint`** string replaced by **`prompt()`** — includes configured permissions (JSON). Standalone export: **`filesystemPrompt()`** (replaces **`FILE_SYSTEM_HINT`**).
-- Omitted **`permissions`** defaults to **deny-all** for file content (**`read`** / **`write`**). **`list`** and **`glob`** are always available for path discovery.
+- Omitted **`permissions`** defaults to **deny-all** for file content (**`read`** / **`write`**). **`glob`** is always available for path discovery.
 
 ### 1.6.1 → 1.6.2
 

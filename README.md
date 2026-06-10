@@ -11,8 +11,8 @@ Monorepo for [**@eyueldk/aisdk-toolkit-***](https://github.com/eyueldk/aisdk-too
 | [@eyueldk/aisdk-toolkit-browser](packages/browser) | 3.0.0 | Playwright tools; **`prompt()`** |
 | [@eyueldk/aisdk-toolkit-fetch](packages/fetch) | 2.0.0 | HTTP **`fetchRequest`** tool |
 | [@eyueldk/aisdk-toolkit-todos](packages/todos) | 2.0.0 | **`writeTodos`** |
-| [@eyueldk/aisdk-toolkit-filesystem](packages/filesystem) | 2.1.0 | Filesystem tools; Cloudflare Sandbox adapter |
-| [@eyueldk/aisdk-toolkit-shell](packages/shell) | 2.1.0 | **`executeCommand`**; Cloudflare Sandbox adapter |
+| [@eyueldk/aisdk-toolkit-filesystem](packages/filesystem) | 2.5.0 | **`applyPatch`** (default), **`glob`**, adapters |
+| [@eyueldk/aisdk-toolkit-shell](packages/shell) | 2.3.0 | **`executeCommand`**; local, Docker, SSH, Daytona |
 
 Each package is published independently to npm. Install and usage live in that package’s README.
 

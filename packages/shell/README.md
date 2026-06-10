@@ -58,7 +58,6 @@ Import adapters from subpaths so bundlers (e.g. SSR) load only the runtime you n
 | `@eyueldk/aisdk-toolkit-shell/adapters/docker` | **DockerShell** |
 | `@eyueldk/aisdk-toolkit-shell/adapters/ssh` | **SshShell** |
 | `@eyueldk/aisdk-toolkit-shell/adapters/daytona` | **DaytonaShell** |
-| `@eyueldk/aisdk-toolkit-shell/adapters/cloudflare-sandbox` | **CloudflareSandboxShell** |
 | `@eyueldk/aisdk-toolkit-shell/adapters` | **ShellAdapter** types only |
 
 The main entry (`@eyueldk/aisdk-toolkit-shell`) exports the toolkit and **ShellAdapter** — not concrete adapters.
@@ -69,17 +68,6 @@ The main entry (`@eyueldk/aisdk-toolkit-shell`) exports the toolkit and **ShellA
 | **DockerShell** | `await DockerShell.create({ container, cwd?, env? })` | Pass a dockerode **`Container`**; `sh -c`; no **`stdin`** |
 | **SshShell** | `await SshShell.create({ host, username, … })` | Persistent SSH; call **`dispose()`** when done |
 | **DaytonaShell** | `await DaytonaShell.create({ sandbox, cwd?, env? })` | Default **`cwd`**: `workspace`; no **`stdin`** |
-| **CloudflareSandboxShell** | `await CloudflareSandboxShell.create({ sandbox, cwd?, env? })` | [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) **`ISandbox`**; default **`cwd`**: `/workspace`; **`stdin`** string/stream |
-
-```ts
-import { getSandbox } from "@cloudflare/sandbox";
-import { createShellToolkit } from "@eyueldk/aisdk-toolkit-shell";
-import { CloudflareSandboxShell } from "@eyueldk/aisdk-toolkit-shell/adapters/cloudflare-sandbox";
-
-const sandbox = getSandbox(env.Sandbox, "agent-1");
-const adapter = await CloudflareSandboxShell.create({ sandbox, cwd: "/workspace" });
-const { tools, prompt } = createShellToolkit({ adapter });
-```
 
 ```ts
 import { createShellToolkit } from "@eyueldk/aisdk-toolkit-shell";
@@ -140,13 +128,11 @@ Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
 
 **Daytona:** set **`DAYTONA_API_KEY`** (and **`DAYTONA_API_URL`** for self-hosted). **`stderr`** in results is always empty (API returns combined stdout).
 
-**Cloudflare Sandbox:** pass an **`ISandbox`** from `getSandbox(env.Sandbox, id)` in your Worker.
-
 ## Migration
 
-### 2.0 → 2.1
+### 2.2 → 2.3
 
-- **`CloudflareSandboxShell`** for [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) via `@eyueldk/aisdk-toolkit-shell/adapters/cloudflare-sandbox`.
+- **`CloudflareSandboxShell`** and **`/adapters/cloudflare-sandbox`** removed.
 
 ### 1.5.2 → 2.0
 

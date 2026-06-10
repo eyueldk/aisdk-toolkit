@@ -55,6 +55,31 @@ export class LocalFileSystem extends FileSystemAdapter {
         path: localAdapterChildPath(adapterDir, d.name),
       }));
   }
+
+  async remove(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    const disk = toDiskPath(this.root, path);
+    if (options?.recursive) {
+      await fs.rm(disk, { recursive: true, force: true });
+      return;
+    }
+    await fs.unlink(disk);
+  }
+
+  async mkdir(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    await fs.mkdir(toDiskPath(this.root, path), {
+      recursive: options?.recursive ?? false,
+    });
+  }
+
+  async move(from: string, to: string): Promise<void> {
+    await fs.rename(toDiskPath(this.root, from), toDiskPath(this.root, to));
+  }
 }
 
 function toDiskPath(rootAbs: string, adapterPath: string): string {

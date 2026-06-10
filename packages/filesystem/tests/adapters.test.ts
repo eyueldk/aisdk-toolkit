@@ -142,6 +142,17 @@ describe("MemoryFileSystem", () => {
     );
   });
 
+  test("remove, mkdir, and move", async () => {
+    const adapter = await MemoryFileSystem.create({
+      initialFiles: { "old.txt": "payload" },
+    });
+    await adapter.mkdir("nested/dir", { recursive: true });
+    await adapter.move("old.txt", "nested/dir/new.txt");
+    await adapter.remove("nested", { recursive: true });
+    const root = await adapter.readDir(".");
+    expect(root.some((e) => e.path === "nested")).toBe(false);
+  });
+
   test("default glob and grep use readDir + readFile", async () => {
     const adapter = await MemoryFileSystem.create({
       initialFiles: {

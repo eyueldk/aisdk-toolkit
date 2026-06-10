@@ -112,6 +112,62 @@ export class DockerFileSystem extends FileSystemAdapter {
       root: this.root,
     });
   }
+
+  async remove(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    const containerPath = toContainerPath(this.root, path);
+    const args = options?.recursive
+      ? ["rm", "-rf", containerPath]
+      : ["rm", "-f", containerPath];
+    const result = await execInContainer(this.container, args);
+    if (result.exitCode !== 0) {
+      const message = result.stderr.trim() || result.stdout.trim();
+      throw new Error(
+        message
+          ? `Failed to remove "${path}": ${message}`
+          : `Failed to remove "${path}" (exit ${result.exitCode})`,
+      );
+    }
+  }
+
+  async mkdir(
+    path: string,
+    options?: { recursive?: boolean },
+  ): Promise<void> {
+    const containerPath = toContainerPath(this.root, path);
+    const args = options?.recursive
+      ? ["mkdir", "-p", containerPath]
+      : ["mkdir", containerPath];
+    const result = await execInContainer(this.container, args);
+    if (result.exitCode !== 0) {
+      const message = result.stderr.trim() || result.stdout.trim();
+      throw new Error(
+        message
+          ? `Failed to create directory "${path}": ${message}`
+          : `Failed to create directory "${path}" (exit ${result.exitCode})`,
+      );
+    }
+  }
+
+  async move(from: string, to: string): Promise<void> {
+    const source = toContainerPath(this.root, from);
+    const destination = toContainerPath(this.root, to);
+    const result = await execInContainer(this.container, [
+      "mv",
+      source,
+      destination,
+    ]);
+    if (result.exitCode !== 0) {
+      const message = result.stderr.trim() || result.stdout.trim();
+      throw new Error(
+        message
+          ? `Failed to move "${from}" to "${to}": ${message}`
+          : `Failed to move "${from}" to "${to}" (exit ${result.exitCode})`,
+      );
+    }
+  }
 }
 
 type ListContainerPathsOptions = {
