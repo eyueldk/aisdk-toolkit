@@ -9,7 +9,7 @@ HTTP fetch tools for the [Vercel AI SDK](https://ai-sdk.dev). Uses **`globalThis
 
 - **`createFetchToolkit({ fetch?, defaultTimeoutMs? })`** → `{ tools, prompt, state }`
 - **`fetchRequest`**: **`path`** (URL) + optional **`query`**, **`method`**, **`headers`**, **`body`**, **`timeoutMs`**
-- **`format`**: `raw` (default) or `markdown` (HTML → Turndown + GFM)
+- **`format`**: `raw` (default) or `markdown` (HTML → Markdown via linkedom + Turndown + GFM; works in Node and Cloudflare Workers)
 
 ## Install
 
@@ -47,6 +47,10 @@ await tools.fetchRequest.execute({
 ```
 
 ## Migration
+
+### 2.0 → 2.1
+
+- **`format: "markdown"`** parses HTML with **linkedom** before Turndown (no browser `document` required). Safe for Cloudflare Workers and other backend runtimes.
 
 ### 1.0 → 2.0
 

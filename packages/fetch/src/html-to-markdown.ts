@@ -1,27 +1,32 @@
+import { DOMParser } from "linkedom";
 import TurndownService from "turndown";
 import { gfm } from "@truto/turndown-plugin-gfm";
 
-let turndownService: TurndownService | undefined;
-
-function getTurndownService(): TurndownService {
-  if (!turndownService) {
-    const service = new TurndownService({
-      headingStyle: "atx",
-      codeBlockStyle: "fenced",
-      emDelimiter: "_",
-    });
-    service.use(gfm);
-    turndownService = service;
-  }
-  return turndownService;
-}
-
 export function htmlToMarkdown(html: string): string {
-  const prepared = prepareHtmlForMarkdown(html).trim();
-  if (!prepared) {
+  const trimmed = html.trim();
+  if (!trimmed) {
     return "";
   }
-  return getTurndownService().turndown(prepared).trim();
+  const document = domParser.parseFromString(trimmed, "text/html");
+  const { body } = document;
+  const elements = topLevelElements(body);
+
+  const [onlyElement] = elements;
+  // linkedom + turndown + GFM: turndown(body) returns "" for table-only pages.
+  if (elements.length === 1 && onlyElement?.nodeName === "TABLE") {
+    return turndownService.turndown(onlyElement).trim();
+  }
+
+  const markdown = turndownService.turndown(body).trim();
+  if (markdown) {
+    return markdown;
+  }
+
+  // Same quirk for other body shapes; convert each top-level element separately.
+  const parts = elements
+    .map((element) => turndownService.turndown(element).trim())
+    .filter((part) => part.length > 0);
+  return parts.join("\n\n");
 }
 
 export function isHtmlResponseBody(
@@ -38,11 +43,28 @@ export function isHtmlResponseBody(
   return trimmed.startsWith("<") && /<\/[a-z][\s\S]*>/i.test(trimmed);
 }
 
-function prepareHtmlForMarkdown(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
-    .replace(/<link\b[^>]*>/gi, "")
-    .replace(/<svg[\s\S]*?<\/svg>/gi, "");
+const domParser = new DOMParser();
+
+const turndownService = new TurndownService({
+  headingStyle: "atx",
+  codeBlockStyle: "fenced",
+  emDelimiter: "_",
+});
+turndownService.use(gfm);
+
+const ELEMENT_NODE = 1;
+
+type HtmlElement = {
+  nodeType: number;
+  nodeName: string;
+};
+
+function topLevelElements(body: { childNodes: Iterable<HtmlElement> }) {
+  const elements: HtmlElement[] = [];
+  for (const child of body.childNodes) {
+    if (child.nodeType === ELEMENT_NODE) {
+      elements.push(child);
+    }
+  }
+  return elements;
 }

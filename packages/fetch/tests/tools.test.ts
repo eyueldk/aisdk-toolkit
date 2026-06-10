@@ -93,11 +93,14 @@ describe("createFetchToolkit", () => {
   test("fetchRequest markdown converts HTML response bodies", async () => {
     const kit = createFetchToolkit({
       fetch: async () =>
-        new Response("<h1>Page</h1><p>Hello <strong>world</strong></p>", {
-          status: 200,
-          statusText: "OK",
-          headers: { "content-type": "text/html; charset=utf-8" },
-        }),
+        new Response(
+          "<!DOCTYPE html><html><body><h1>Page</h1><p>Hello <strong>world</strong></p></body></html>",
+          {
+            status: 200,
+            statusText: "OK",
+            headers: { "content-type": "text/html; charset=utf-8" },
+          },
+        ),
     });
     const out = await kit.tools.fetchRequest.execute!(
       { path: "https://example.com/", format: "markdown" },
