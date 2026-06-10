@@ -1,0 +1,81 @@
+{
+  "name": "@eyueldk/aisdk-toolkit-search",
+  "version": "1.1.0",
+  "description": "Web search tools with pluggable adapters (Firecrawl, DuckDuckGo) for the Vercel AI SDK",
+  "license": "MIT",
+  "author": "Eyuel G. Molla",
+  "sideEffects": false,
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.mts",
+      "import": "./dist/adapters/index.mjs"
+    },
+    "./adapters/firecrawl": {
+      "types": "./dist/adapters/firecrawl.d.mts",
+      "import": "./dist/adapters/firecrawl.mjs"
+    },
+    "./adapters/duckduckgo": {
+      "types": "./dist/adapters/duckduckgo.d.mts",
+      "import": "./dist/adapters/duckduckgo.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eyueldk/aisdk-toolkit.git",
+    "directory": "packages/search"
+  },
+  "bugs": {
+    "url": "https://github.com/eyueldk/aisdk-toolkit/issues"
+  },
+  "homepage": "https://github.com/eyueldk/aisdk-toolkit/tree/main/packages/search#readme",
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "pnpm check && pnpm build",
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "eyueldk",
+    "aisdk-toolkit",
+    "@eyueldk/aisdk-toolkit-search",
+    "ai-sdk",
+    "vercel-ai-sdk",
+    "search",
+    "firecrawl",
+    "duckduckgo",
+    "tools",
+    "agents"
+  ],
+  "dependencies": {
+    "@mendable/firecrawl-js": "^4.25.3",
+    "ai": "^6.0.180",
+    "duck-duck-scrape": "^2.2.7",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@openrouter/ai-sdk-provider": "^2.9.0",
+    "@types/node": "^25.7.0",
+    "dotenv": "^17.2.1",
+    "tsdown": "^0.22.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
