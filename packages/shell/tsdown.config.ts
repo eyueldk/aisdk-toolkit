@@ -8,6 +8,7 @@ export default defineConfig({
     "adapters/docker": "src/adapters/docker-adapter.ts",
     "adapters/ssh": "src/adapters/ssh-adapter.ts",
     "adapters/daytona": "src/adapters/daytona-adapter.ts",
+    "adapters/cloudflare-sandbox": "src/adapters/cloudflare-sandbox-adapter.ts",
   },
   format: ["esm"],
   clean: true,

@@ -58,6 +58,7 @@ Import adapters from subpaths so bundlers (e.g. SSR) load only the runtime you n
 | `@eyueldk/aisdk-toolkit-shell/adapters/docker` | **DockerShell** |
 | `@eyueldk/aisdk-toolkit-shell/adapters/ssh` | **SshShell** |
 | `@eyueldk/aisdk-toolkit-shell/adapters/daytona` | **DaytonaShell** |
+| `@eyueldk/aisdk-toolkit-shell/adapters/cloudflare-sandbox` | **CloudflareSandboxShell** |
 | `@eyueldk/aisdk-toolkit-shell/adapters` | **ShellAdapter** types only |
 
 The main entry (`@eyueldk/aisdk-toolkit-shell`) exports the toolkit and **ShellAdapter** — not concrete adapters.
@@ -68,6 +69,7 @@ The main entry (`@eyueldk/aisdk-toolkit-shell`) exports the toolkit and **ShellA
 | **DockerShell** | `await DockerShell.create({ container, cwd?, env? })` | Pass a dockerode **`Container`**; `sh -c`; no **`stdin`** |
 | **SshShell** | `await SshShell.create({ host, username, … })` | Persistent SSH; call **`dispose()`** when done |
 | **DaytonaShell** | `await DaytonaShell.create({ sandbox, cwd?, env? })` | Default **`cwd`**: `workspace`; no **`stdin`** |
+| **CloudflareSandboxShell** | `await CloudflareSandboxShell.create({ sandbox, cwd?, env? })` | **`ISandbox.exec`**; default **`cwd`**: `/workspace`; **`stdin`** string supported |
 
 ```ts
 import { createShellToolkit } from "@eyueldk/aisdk-toolkit-shell";
@@ -84,6 +86,18 @@ try {
 } finally {
   await ssh.dispose();
 }
+```
+
+Cloudflare Sandbox (Workers + `@cloudflare/sandbox`):
+
+```ts
+import { getSandbox } from "@cloudflare/sandbox";
+import { createShellToolkit } from "@eyueldk/aisdk-toolkit-shell";
+import { CloudflareSandboxShell } from "@eyueldk/aisdk-toolkit-shell/adapters/cloudflare-sandbox";
+
+const sandbox = getSandbox(env.Sandbox, "session-id");
+const adapter = await CloudflareSandboxShell.create({ sandbox, cwd: "/workspace" });
+const { tools, prompt } = createShellToolkit({ adapter });
 ```
 
 ## Configuration
@@ -123,16 +137,16 @@ Streams result-only chunks (inputs are not echoed). Each chunk has a **`kind`**:
 | --- | --- | --- |
 | **`cwd`** | adapter default | Working directory |
 | **`env`** | merged layers | Extra environment variables |
-| **`stdin`** | — | String or **`Readable`** (local/SSH only) |
+| **`stdin`** | — | String or **`Readable`** (local, SSH, Cloudflare Sandbox) |
 | **`stdout`** / **`stderr`** | buffered | Optional **`Writable`** streams; result strings empty when streaming |
 
 **Daytona:** set **`DAYTONA_API_KEY`** (and **`DAYTONA_API_URL`** for self-hosted). **`stderr`** in results is always empty (API returns combined stdout).
 
 ## Migration
 
-### 2.2 → 2.3
+### 2.3 → 2.4
 
-- **`CloudflareSandboxShell`** and **`/adapters/cloudflare-sandbox`** removed.
+- **`CloudflareSandboxShell`** restored at **`/adapters/cloudflare-sandbox`** (`@cloudflare/sandbox` **`ISandbox`**).
 
 ### 1.5.2 → 2.0
 

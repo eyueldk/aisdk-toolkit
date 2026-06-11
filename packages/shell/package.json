@@ -1,7 +1,7 @@
 {
   "name": "@eyueldk/aisdk-toolkit-shell",
-  "version": "2.3.0",
-  "description": "Shell command tools with pluggable adapters (local, Docker, SSH, Daytona) for the Vercel AI SDK",
+  "version": "2.4.0",
+  "description": "Shell command tools with pluggable adapters (local, Docker, SSH, Daytona, Cloudflare Sandbox) for the Vercel AI SDK",
   "license": "MIT",
   "author": "Eyuel G. Molla",
   "sideEffects": false,
@@ -31,6 +31,10 @@
     "./adapters/daytona": {
       "types": "./dist/adapters/daytona.d.mts",
       "import": "./dist/adapters/daytona.mjs"
+    },
+    "./adapters/cloudflare-sandbox": {
+      "types": "./dist/adapters/cloudflare-sandbox.d.mts",
+      "import": "./dist/adapters/cloudflare-sandbox.mjs"
     },
     "./package.json": "./package.json"
   },
@@ -71,6 +75,7 @@
     "agents"
   ],
   "dependencies": {
+    "@cloudflare/sandbox": "0.12.1",
     "@daytonaio/sdk": "0.183.0",
     "ai": "^6.0.180",
     "dockerode": "4.0.9",

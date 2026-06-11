@@ -11,7 +11,7 @@ Pluggable filesystem tools for the [Vercel AI SDK](https://ai-sdk.dev). Swap sto
 - Default **`editMode: "applyPatch"`** — **`applyPatch`** (OpenCode-style patches) plus **`readFile`**, **`glob`**, **`grep`**
 - **`editMode: "tools"`** — granular **`writeFile`**, **`editFile`**, **`remove`**, **`move`** instead of **`applyPatch`**
 - Optional path **permissions** (first matching glob wins)
-- Adapters: memory, local disk, Docker container, Daytona sandbox, **composite** (multiple mounts)
+- Adapters: memory, local disk, Docker container, Daytona sandbox, Cloudflare Sandbox, **composite** (multiple mounts)
 
 ## Install
 
@@ -57,6 +57,7 @@ Import adapters from subpaths so bundlers (e.g. SSR) load only the runtime you n
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/local` | **LocalFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/docker` | **DockerFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/daytona` | **DaytonaFileSystem** |
+| `@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox` | **CloudflareSandboxFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters/composite` | **CompositeFileSystem** |
 | `@eyueldk/aisdk-toolkit-filesystem/adapters` | **FileSystemAdapter** types only |
 
@@ -69,6 +70,7 @@ The main entry (`@eyueldk/aisdk-toolkit-filesystem`) exports the toolkit and **F
 | **DockerFileSystem** | `await DockerFileSystem.create({ container, root?, docker? })` | Running container; list via **`find`** |
 | **CompositeFileSystem** | `CompositeFileSystem.create({ mounts })` | Virtual union of adapters; mount keys must not overlap/nest |
 | **DaytonaFileSystem** | `await DaytonaFileSystem.create({ sandbox, root? })` or `{ sandboxId?, daytona? }` | Default **`root`**: `workspace` |
+| **CloudflareSandboxFileSystem** | `await CloudflareSandboxFileSystem.create({ sandbox, root? })` | Pass **`ISandbox`** from `getSandbox`; default **`root`**: `/workspace` |
 
 ```ts
 import { LocalFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/local";
@@ -84,6 +86,16 @@ import { Daytona } from "@daytonaio/sdk";
 
 const sandbox = await new Daytona().create();
 const adapter = await DaytonaFileSystem.create({ sandbox, root: "workspace" });
+```
+
+Cloudflare Sandbox (Workers + `@cloudflare/sandbox`):
+
+```ts
+import { getSandbox } from "@cloudflare/sandbox";
+import { CloudflareSandboxFileSystem } from "@eyueldk/aisdk-toolkit-filesystem/adapters/cloudflare-sandbox";
+
+const sandbox = getSandbox(env.Sandbox, "session-id");
+const adapter = await CloudflareSandboxFileSystem.create({ sandbox, root: "/workspace" });
 ```
 
 Adapter paths are POSIX and normalized with **`resolvePath`**. **`..`** is allowed when the resolved path stays inside **`root`**.
@@ -170,12 +182,15 @@ createFileSystemToolkit({
 
 - **`applyPatch`** parser tolerates markdown code fences, trailing blank lines, and whitespace on envelope lines; clearer errors when `*** End Patch` is missing.
 
+### 2.5 → 2.6
+
+- **`CloudflareSandboxFileSystem`** restored at **`/adapters/cloudflare-sandbox`** (`@cloudflare/sandbox` **`ISandbox`**).
+
 ### 2.4 → 2.5
 
 - Default **`editMode: "applyPatch"`** — **`applyPatch`** replaces **`writeFile`** / **`editFile`** / **`remove`** / **`move`** unless you pass **`editMode: "tools"`**.
 - **`prompt()`** documents the OpenCode patch format when **`editMode`** is **`applyPatch`**.
 - Low-level helpers **`parsePatch`** and **`applyPatchOperations`** are exported; diffs use **`applyDiff`** from **`@openai/agents`**.
-- **`CloudflareSandboxFileSystem`** and **`/adapters/cloudflare-sandbox`** removed.
 
 ### 2.3 → 2.4
 

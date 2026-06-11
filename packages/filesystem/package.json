@@ -1,6 +1,6 @@
 {
   "name": "@eyueldk/aisdk-toolkit-filesystem",
-  "version": "2.5.1",
+  "version": "2.6.0",
   "description": "FileSystem AI SDK tools with pluggable adapters for the Vercel AI SDK",
   "license": "MIT",
   "author": "Eyuel G. Molla",
@@ -36,6 +36,10 @@
     "./adapters/composite": {
       "types": "./dist/adapters/composite.d.mts",
       "import": "./dist/adapters/composite.mjs"
+    },
+    "./adapters/cloudflare-sandbox": {
+      "types": "./dist/adapters/cloudflare-sandbox.d.mts",
+      "import": "./dist/adapters/cloudflare-sandbox.mjs"
     },
     "./package.json": "./package.json"
   },
@@ -74,6 +78,7 @@
     "agents"
   ],
   "dependencies": {
+    "@cloudflare/sandbox": "0.12.1",
     "@daytonaio/sdk": "0.183.0",
     "@openai/agents": "^0.11.6",
     "ai": "^6.0.180",
