@@ -14,7 +14,7 @@ Monorepo for [**@eyueldk/aisdk-toolkit-***](https://github.com/eyueldk/aisdk-too
 | [@eyueldk/aisdk-toolkit-todos](packages/todos) | 2.0.0 | **`writeTodos`** |
 | [@eyueldk/aisdk-toolkit-filesystem](packages/filesystem) | 2.5.0 | **`applyPatch`** (default), **`glob`**, adapters |
 | [@eyueldk/aisdk-toolkit-shell](packages/shell) | 2.3.0 | **`executeCommand`**; local, Docker, SSH, Daytona |
-| [@eyueldk/aisdk-toolkit-instructions](packages/instructions) | 1.0.0 | **`createInstructionsToolkit`** — dynamic instructions **`middleware`** |
+| [@eyueldk/aisdk-toolkit-instructions](packages/instructions) | 1.0.0 | **`createInstructionsToolkit`** — injects loader **`middleware`** as system messages |
 
 Each package is published independently to npm. Install and usage live in that package’s README.
 

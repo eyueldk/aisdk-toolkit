@@ -100,17 +100,23 @@ describe("createAgentsMdLoader", () => {
       },
     });
 
-    expect(result.prompt[0]).toEqual({
-      role: "system",
-      content: [
-        "The following instructions are loaded from AGENTS.md:",
-        "",
-        "<AGENTS.md>",
-        "From AGENTS.md",
-        "</AGENTS.md>",
-        "",
-        "Extra rules",
-      ].join("\n"),
-    });
+    expect(result.prompt).toEqual([
+      { role: "system", content: "stale" },
+      {
+        role: "system",
+        content: [
+          "The following instructions are loaded from AGENTS.md:",
+          "",
+          "<AGENTS.md>",
+          "From AGENTS.md",
+          "</AGENTS.md>",
+        ].join("\n"),
+      },
+      { role: "system", content: "Extra rules" },
+      {
+        role: "user",
+        content: [{ type: "text", text: "hi" }],
+      },
+    ]);
   });
 });

@@ -10,7 +10,6 @@ export type InstructionsToolkit = {
 
 export type CreateInstructionsToolkitOptions = {
   loaders: InstructionLoader[];
-  separator?: string;
 };
 
 /**
@@ -23,7 +22,6 @@ export function createInstructionsToolkit(
   return {
     middleware: instructionsMiddleware({
       loaders: options.loaders,
-      separator: options.separator,
     }),
   };
 }

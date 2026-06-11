@@ -4,34 +4,41 @@ export type InstructionLoader = () => string | Promise<string>;
 
 export type InstructionsMiddlewareOptions = {
   loaders: InstructionLoader[];
-  separator?: string;
 };
 
 export function instructionsMiddleware(
   options: InstructionsMiddlewareOptions,
 ): LanguageModelMiddleware {
-  const separator = options.separator ?? "\n\n";
   return {
     specificationVersion: "v3",
     transformParams: async ({ params }) => {
-      const conversation = params.prompt.filter(
-        (message) => message.role !== "system",
-      );
-      const parts: string[] = [];
+      const injected: Array<{ role: "system"; content: string }> = [];
 
       for (const loader of options.loaders) {
         const text = await loader();
         const trimmed = text.trim();
         if (trimmed.length > 0) {
-          parts.push(trimmed);
+          injected.push({ role: "system", content: trimmed });
         }
       }
 
-      const systemContent = parts.join(separator);
-      const prompt =
-        systemContent.length > 0
-          ? [{ role: "system" as const, content: systemContent }, ...conversation]
-          : conversation;
+      if (injected.length === 0) {
+        return params;
+      }
+
+      let lastSystemIndex = -1;
+      for (let index = 0; index < params.prompt.length; index++) {
+        if (params.prompt[index]?.role === "system") {
+          lastSystemIndex = index;
+        }
+      }
+
+      const insertAt = lastSystemIndex + 1;
+      const prompt = [
+        ...params.prompt.slice(0, insertAt),
+        ...injected,
+        ...params.prompt.slice(insertAt),
+      ];
 
       return {
         ...params,

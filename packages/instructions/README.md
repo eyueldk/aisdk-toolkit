@@ -3,14 +3,14 @@
 [![npm](https://img.shields.io/npm/v/@eyueldk/aisdk-toolkit-instructions)](https://www.npmjs.com/package/@eyueldk/aisdk-toolkit-instructions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/eyueldk/aisdk-toolkit/blob/main/LICENSE)
 
-Dynamic instructions for the [Vercel AI SDK](https://ai-sdk.dev). Returns language-model **`middleware`** that replaces static `system` messages with content from **`loaders`** on every model call.
+Dynamic instructions for the [Vercel AI SDK](https://ai-sdk.dev). Returns language-model **`middleware`** that injects additional `system` messages from **`loaders`** on every model call.
 
 ## Features
 
 - **`createInstructionsToolkit({ loaders })`** — returns AI SDK **`middleware`**
 - **`loaders`** — async or sync functions that return instruction text (empty results skipped)
 - **`createAgentsMdLoader()`** — load **`AGENTS.md`** via **`FileSystemAdapter`** with boundary tags; optional **`learn`** mode
-- Strips existing **`system`** messages and injects one combined system message
+- Injects one **`system`** message per non-empty loader after the last existing system message
 
 ## Install
 
@@ -57,8 +57,7 @@ await generateText({
 
 | Option | Default | Description |
 | --- | --- | --- |
-| **`loaders`** | (required) | Functions that return instruction text (sync or async). Empty/whitespace results are skipped. |
-| **`separator`** | `\n\n` | Join string between non-empty loader results |
+| **`loaders`** | (required) | Functions that return instruction text (sync or async). Each non-empty result becomes its own `system` message. |
 
 ### Predefined loaders
 

@@ -7,7 +7,7 @@ const userMessage = {
 };
 
 describe("instructionsMiddleware", () => {
-  test("replaces existing system messages with loaded instructions", async () => {
+  test("injects loaded instructions after existing system messages", async () => {
     const middleware = instructionsMiddleware({
       loaders: [() => "Base rules", async () => "Tool hints"],
     });
@@ -21,14 +21,39 @@ describe("instructionsMiddleware", () => {
       model: {} as never,
       params: {
         prompt: [
-          { role: "system", content: "stale system" },
+          { role: "system", content: "Existing system" },
           userMessage,
         ],
       },
     });
 
     expect(result.prompt).toEqual([
-      { role: "system", content: "Base rules\n\nTool hints" },
+      { role: "system", content: "Existing system" },
+      { role: "system", content: "Base rules" },
+      { role: "system", content: "Tool hints" },
+      userMessage,
+    ]);
+  });
+
+  test("prepends instructions when no system messages exist", async () => {
+    const middleware = instructionsMiddleware({
+      loaders: [() => "Base rules"],
+    });
+    const transformParams = middleware.transformParams;
+    if (!transformParams) {
+      throw new Error("expected transformParams");
+    }
+
+    const result = await transformParams({
+      type: "generate",
+      model: {} as never,
+      params: {
+        prompt: [userMessage],
+      },
+    });
+
+    expect(result.prompt).toEqual([
+      { role: "system", content: "Base rules" },
       userMessage,
     ]);
   });
@@ -48,20 +73,28 @@ describe("instructionsMiddleware", () => {
       model: {} as never,
       params: {
         prompt: [
-          { role: "system" as const, content: "old" },
+          { role: "system" as const, content: "existing" },
           userMessage,
         ],
       },
     };
 
     const first = await transformParams(params);
-    expect(first.prompt[0]).toEqual({ role: "system", content: "count: 1" });
+    expect(first.prompt).toEqual([
+      { role: "system", content: "existing" },
+      { role: "system", content: "count: 1" },
+      userMessage,
+    ]);
 
     const second = await transformParams(params);
-    expect(second.prompt[0]).toEqual({ role: "system", content: "count: 2" });
+    expect(second.prompt).toEqual([
+      { role: "system", content: "existing" },
+      { role: "system", content: "count: 2" },
+      userMessage,
+    ]);
   });
 
-  test("omits system message when all loaders are empty", async () => {
+  test("leaves the prompt unchanged when all loaders are empty", async () => {
     const middleware = instructionsMiddleware({
       loaders: [() => "", async () => "   "],
     });
@@ -70,14 +103,19 @@ describe("instructionsMiddleware", () => {
       throw new Error("expected transformParams");
     }
 
+    const originalPrompt = [
+      { role: "system" as const, content: "existing" },
+      userMessage,
+    ];
+
     const result = await transformParams({
       type: "generate",
       model: {} as never,
       params: {
-        prompt: [{ role: "system", content: "old" }, userMessage],
+        prompt: originalPrompt,
       },
     });
 
-    expect(result.prompt).toEqual([userMessage]);
+    expect(result.prompt).toEqual(originalPrompt);
   });
 });
