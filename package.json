@@ -14,7 +14,7 @@
   "scripts": {
     "build": "pnpm --filter \"./packages/**\" run build",
     "check": "pnpm --filter \"./packages/**\" run check",
-    "test": "pnpm -F @eyueldk/aisdk-toolkit-browser test && pnpm -F @eyueldk/aisdk-toolkit-todos test && pnpm -F @eyueldk/aisdk-toolkit-filesystem test && pnpm -F @eyueldk/aisdk-toolkit-shell test && pnpm -F @eyueldk/aisdk-toolkit-fetch test && pnpm -F @eyueldk/aisdk-toolkit-search test"
+    "test": "pnpm -F @eyueldk/aisdk-toolkit-browser test && pnpm -F @eyueldk/aisdk-toolkit-todos test && pnpm -F @eyueldk/aisdk-toolkit-filesystem test && pnpm -F @eyueldk/aisdk-toolkit-shell test && pnpm -F @eyueldk/aisdk-toolkit-fetch test && pnpm -F @eyueldk/aisdk-toolkit-search test && pnpm -F @eyueldk/aisdk-toolkit-instructions test"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

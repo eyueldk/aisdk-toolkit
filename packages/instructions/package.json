@@ -1,0 +1,61 @@
+{
+  "name": "@eyueldk/aisdk-toolkit-instructions",
+  "version": "1.0.0",
+  "description": "Dynamic instructions for AI SDK language models via language-model middleware",
+  "license": "MIT",
+  "author": "Eyuel G. Molla",
+  "sideEffects": false,
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eyueldk/aisdk-toolkit.git",
+    "directory": "packages/instructions"
+  },
+  "bugs": {
+    "url": "https://github.com/eyueldk/aisdk-toolkit/issues"
+  },
+  "homepage": "https://github.com/eyueldk/aisdk-toolkit/tree/main/packages/instructions#readme",
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "pnpm check && pnpm build",
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "eyueldk",
+    "aisdk-toolkit",
+    "@eyueldk/aisdk-toolkit-instructions",
+    "ai-sdk",
+    "vercel-ai-sdk",
+    "instructions",
+    "middleware",
+    "agents"
+  ],
+  "dependencies": {
+    "@eyueldk/aisdk-toolkit-filesystem": "workspace:*",
+    "ai": "^6.0.180"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "dotenv": "^17.2.1",
+    "tsdown": "^0.22.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
