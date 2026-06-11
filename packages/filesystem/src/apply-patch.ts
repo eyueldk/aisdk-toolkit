@@ -23,11 +23,17 @@ export type AppliedPatch =
 
 export function parsePatch(patch: string): PatchOperation[] {
   const lines = normalizePatchLines(patch);
-  if (lines[0] !== BEGIN_PATCH) {
-    throw new Error(`Patch must start with ${BEGIN_PATCH}`);
+  const firstLine = lines[0]?.trim();
+  const lastLine = lines.at(-1)?.trim();
+  if (firstLine !== BEGIN_PATCH) {
+    throw new Error(
+      `Patch must start with ${BEGIN_PATCH}${firstLine ? ` (got: ${JSON.stringify(lines[0])})` : ""}`,
+    );
   }
-  if (lines.at(-1) !== END_PATCH) {
-    throw new Error(`Patch must end with ${END_PATCH}`);
+  if (lastLine !== END_PATCH) {
+    throw new Error(
+      `Patch must end with ${END_PATCH}${lastLine !== undefined ? ` (got: ${JSON.stringify(lines.at(-1))})` : ""}`,
+    );
   }
 
   const operations: PatchOperation[] = [];
@@ -178,10 +184,20 @@ async function applyUpdate(
 }
 
 function normalizePatchLines(patch: string): string[] {
-  return patch
+  const lines = stripMarkdownCodeFence(patch.trim())
     .split(/\r?\n/)
-    .map((line) => line.replace(/\r$/, ""))
-    .filter((line, index, lines) => !(index === lines.length - 1 && line === ""));
+    .map((line) => line.replace(/\r$/, ""));
+  while (lines.length > 0 && lines.at(-1) === "") {
+    lines.pop();
+  }
+  return lines;
+}
+
+function stripMarkdownCodeFence(patch: string): string {
+  if (!patch.startsWith("```")) {
+    return patch;
+  }
+  return patch.replace(/^```[^\n]*\n?/, "").replace(/\n?```[^\n]*$/, "");
 }
 
 function isOperationHeader(line: string): boolean {

@@ -166,6 +166,10 @@ createFileSystemToolkit({
 
 ## Migration
 
+### 2.5.0 → 2.5.1
+
+- **`applyPatch`** parser tolerates markdown code fences, trailing blank lines, and whitespace on envelope lines; clearer errors when `*** End Patch` is missing.
+
 ### 2.4 → 2.5
 
 - Default **`editMode: "applyPatch"`** — **`applyPatch`** replaces **`writeFile`** / **`editFile`** / **`remove`** / **`move`** unless you pass **`editMode: "tools"`**.

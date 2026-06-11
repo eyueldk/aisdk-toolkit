@@ -45,6 +45,7 @@ It is important to remember:
 
 - You must include a header with your intended action (Add/Delete/Update)
 - You must prefix new lines with \`+\` even when creating a new file
+- The \`patch\` tool argument must include both envelope lines exactly: \`${"*** Begin Patch"}\` as the first line and \`${"*** End Patch"}\` as the last line (no text after it). Do not wrap the patch in markdown code fences when calling the tool.
 
 You also have **readFile**, **glob** (find paths by pattern), and **grep** (search file contents with a regex). Paths are POSIX-style (forward slashes). Prefer **readFile** before patching when you need exact file contents.
 

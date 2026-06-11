@@ -40,6 +40,31 @@ describe("parsePatch", () => {
       /Begin Patch/,
     );
   });
+
+  test("accepts markdown code fences and trailing whitespace around envelope", () => {
+    const patch = `\`\`\`
+*** Begin Patch
+*** Add File: hello.txt
++Hello world
+*** End Patch   
+\`\`\``;
+    expect(parsePatch(patch)).toEqual([
+      { kind: "add", path: "hello.txt", diff: "+Hello world" },
+    ]);
+  });
+
+  test("accepts trailing blank lines after end marker", () => {
+    const patch = `${EXAMPLE_PATCH}\n\n`;
+    expect(parsePatch(patch)).toHaveLength(3);
+  });
+
+  test("reports the last line when end marker is missing", () => {
+    expect(() =>
+      parsePatch(`*** Begin Patch
+*** Add File: x.txt
++hi`),
+    ).toThrow(/End Patch.*got: "\+hi"/);
+  });
 });
 
 describe("applyPatchOperations", () => {
