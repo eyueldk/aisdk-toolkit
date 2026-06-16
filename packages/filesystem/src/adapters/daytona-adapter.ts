@@ -53,7 +53,21 @@ export class DaytonaFileSystem extends FileSystemAdapter {
   createReadStream(path: string): Readable {
     const remotePath = toSandboxPath(this.root, path);
     const out = new PassThrough();
-    void this.sandbox.fs
+    const fs = this.sandbox.fs;
+
+    if (!daytonaSupportsDownloadStreams()) {
+      void fs
+        .downloadFile(remotePath)
+        .then((data) => {
+          out.end(data);
+        })
+        .catch((err) => {
+          out.destroy(mapDaytonaFsError(err, remotePath));
+        });
+      return out;
+    }
+
+    void fs
       .downloadFileStream(remotePath)
       .then((stream) => {
         stream.on("error", (err) => out.destroy(err));
@@ -266,4 +280,80 @@ function mapDaytonaFsError(err: unknown, remotePath: string): Error {
     return enoent;
   }
   return err instanceof Error ? err : new Error(String(err));
+}
+
+const DaytonaRuntimeKind = {
+  NODE: "node",
+  DENO: "deno",
+  BUN: "bun",
+  BROWSER: "browser",
+  SERVERLESS: "serverless",
+  UNKNOWN: "unknown",
+} as const;
+
+type DaytonaRuntimeKindValue =
+  (typeof DaytonaRuntimeKind)[keyof typeof DaytonaRuntimeKind];
+
+/**
+ * Mirrors `@daytonaio/sdk` `utils/Runtime` detection (not publicly exported).
+ */
+function detectDaytonaRuntime(): DaytonaRuntimeKindValue {
+  if (hasDenoRuntime()) {
+    return DaytonaRuntimeKind.DENO;
+  }
+  if (hasBunRuntime()) {
+    return DaytonaRuntimeKind.BUN;
+  }
+  if (isDaytonaServerlessRuntime()) {
+    return DaytonaRuntimeKind.SERVERLESS;
+  }
+  if (typeof window !== "undefined") {
+    return DaytonaRuntimeKind.BROWSER;
+  }
+  if (typeof process !== "undefined" && process.versions?.node) {
+    return DaytonaRuntimeKind.NODE;
+  }
+  return DaytonaRuntimeKind.UNKNOWN;
+}
+
+function readGlobal(name: string): unknown {
+  return Reflect.get(globalThis, name);
+}
+
+function hasDenoRuntime(): boolean {
+  return readGlobal("Deno") !== undefined;
+}
+
+function hasBunRuntime(): boolean {
+  const bun = readGlobal("Bun");
+  if (typeof bun !== "object" || bun === null || !("version" in bun)) {
+    return false;
+  }
+  return Boolean(bun.version);
+}
+
+/** Mirrors `@daytonaio/sdk` `utils/Runtime.isServerlessRuntime`. */
+function isDaytonaServerlessRuntime(): boolean {
+  const env = typeof process !== "undefined" ? process.env : {};
+  return Boolean(
+    typeof readGlobal("WebSocketPair") === "function" ||
+      env.CF_PAGES === "1" ||
+      env.AWS_EXECUTION_ENV?.startsWith("AWS_Lambda") ||
+      env.LAMBDA_TASK_ROOT !== undefined ||
+      env.AWS_SAM_LOCAL === "true" ||
+      env.FUNCTIONS_WORKER_RUNTIME !== undefined ||
+      (env.FUNCTION_TARGET !== undefined &&
+        env.FUNCTION_SIGNATURE_TYPE !== undefined) ||
+      env.VERCEL === "1" ||
+      env.SITE_NAME !== undefined,
+  );
+}
+
+/** Matches `@daytonaio/sdk` `FileSystem.downloadFileStream` runtime gating. */
+function daytonaSupportsDownloadStreams(): boolean {
+  const runtime = detectDaytonaRuntime();
+  return (
+    runtime !== DaytonaRuntimeKind.BROWSER &&
+    runtime !== DaytonaRuntimeKind.SERVERLESS
+  );
 }

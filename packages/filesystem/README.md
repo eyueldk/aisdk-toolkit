@@ -178,6 +178,10 @@ createFileSystemToolkit({
 
 ## Migration
 
+### 2.6.0 → 2.6.1
+
+- **`DaytonaFileSystem`** uses **`downloadFile`** instead of **`downloadFileStream`** on serverless/browser runtimes (e.g. Cloudflare Workers), matching **`@daytonaio/sdk`** gating.
+
 ### 2.5.0 → 2.5.1
 
 - **`applyPatch`** parser tolerates markdown code fences, trailing blank lines, and whitespace on envelope lines; clearer errors when `*** End Patch` is missing.
